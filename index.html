@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PATCH — мережева лабораторія</title>
+<meta name="description" content="Тренажер мереж: маршрутизація, маски, NAT, CGNAT, IPv6, Wi-Fi та DHCP на справжніх правилах.">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PATCH">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --ink:#0a0a0a;          /* аркуш */
+  --ink2:#111111;
+  --panel:#161616;
+  --line:#242424;
+  --line2:#3a3a3a;
+  --paper:#ededed;
+  --paper2:#a8a8a8;
+  --dim:#6e6e6e;
+  --cu:#4f4f4f;           /* кабель — тьмяний */
+  --patch:#ffffff;        /* шлях пакета — яскравий */
+  --ok:#ffffff;
+  --bad:#ffffff;
+  --warn:#a8a8a8;
+  --disp:ui-sans-serif,system-ui,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:26px 26px;min-height:100vh}
+button,input,select{font-family:var(--mono);color:inherit;background:none;border:none;font-size:13px}
+button{cursor:pointer}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+
+header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#141414,#0a0a0a);border-bottom:1px solid var(--line);padding:10px 14px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.logo{font-family:var(--disp);font-weight:700;font-size:21px;letter-spacing:5px}
+.tag{font-size:10.5px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
+.taskchip{margin-left:auto;font-size:10.5px;color:var(--paper2);border:1px solid var(--line2);padding:3px 8px;letter-spacing:1px;text-transform:uppercase}
+
+nav{display:flex;gap:0;background:var(--ink2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;overflow-x:auto}
+nav button{font-family:var(--disp);font-weight:600;letter-spacing:1.8px;font-size:12.5px;text-transform:uppercase;color:var(--dim);padding:11px 14px;border-bottom:2px solid transparent;white-space:nowrap}
+nav button.on{color:var(--paper);border-bottom-color:var(--paper)}
+
+main{max-width:960px;margin:0 auto;padding:12px;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+header{padding-top:calc(10px + env(safe-area-inset-top))}
+.tab{display:none}.tab.on{display:block}
+h2.sec{font-family:var(--disp);font-weight:600;letter-spacing:2.5px;font-size:13px;text-transform:uppercase;color:var(--paper2);margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+h2.sec::before{content:'';width:14px;height:2px;background:var(--paper)}
+.card{background:var(--ink2);border:1px solid var(--line);padding:12px;margin-bottom:10px}
+.hint{font-size:12px;color:var(--dim);line-height:1.55}
+.btn{font-family:var(--disp);font-weight:600;letter-spacing:1.4px;text-transform:uppercase;font-size:12.5px;padding:9px 13px;border:1px solid var(--line2);background:var(--panel);color:var(--paper)}
+.btn:hover{border-color:var(--paper);color:var(--paper)}
+.btn.primary{background:var(--paper);color:#0a0a0a;border-color:var(--paper);font-weight:700}
+.btn.primary:hover{filter:brightness(.92);color:#0a0a0a}
+.btn.sm{font-size:11px;padding:5px 9px;letter-spacing:1px}
+.btn.on{border-color:var(--paper);color:var(--paper);background:rgba(255,255,255,.08)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=number],select{background:var(--ink);border:1px solid var(--line2);padding:7px 9px;color:var(--paper);min-width:0}
+input:focus,select:focus{outline:none;border-color:var(--paper)}
+label.f{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:3px}
+
+.ib{display:inline-flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;padding:5px 7px;color:var(--dim)}
+.ib svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ib span{font-size:9px;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}
+.ib:hover,.ib:focus-visible{color:var(--paper);outline:none}
+.ib.on{color:var(--paper)}
+.ib.on svg{stroke-width:2.1}
+.ibrow{display:flex;gap:2px;flex-wrap:wrap;align-items:flex-start}
+nav .ib{padding:8px 11px;border-bottom:2px solid transparent}
+nav .ib.on{border-bottom-color:var(--paper)}
+
+/* --- схема --- */
+.canvaswrap{border:1px solid var(--line);background:
+  radial-gradient(circle at 30% 20%,rgba(255,255,255,.035),transparent 55%),var(--ink);overflow:hidden}
+svg.net{width:100%;height:auto;display:block;touch-action:none}
+.devbox{cursor:pointer}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);margin-top:8px;letter-spacing:.5px}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px}
+
+/* --- трасування: головний елемент --- */
+.trace{background:#060606;border:1px solid var(--line);padding:11px;font-size:12.5px;line-height:1.75;max-height:46vh;overflow:auto}
+.trace .l{display:flex;gap:9px;border-bottom:1px dotted rgba(31,90,113,.35);padding:3px 0}
+.trace .l:last-child{border:none}
+.trace .n{color:var(--dim);flex:0 0 26px;text-align:right}
+.trace .ok,.trace .bad,.trace .nat{color:var(--paper)}
+.trace .ok::before{content:'✓ '}
+.trace .bad::before{content:'✕ ';font-weight:700}
+.trace .warn{color:var(--warn)}.trace .warn::before{content:'! ';font-weight:700}
+.trace .nat::before{content:'⇄ '}
+.trace .bad{text-decoration:underline;text-underline-offset:3px;text-decoration-style:dotted}
+.verdict{padding:9px 11px;border-left:3px solid var(--line2);margin-bottom:9px;font-size:13px}
+.verdict.ok{border-left-width:4px;border-color:var(--ok);background:rgba(255,255,255,.06)}
+.verdict.ok::before{content:'✓ ';font-weight:700}
+.verdict.bad{border-left-style:dashed;border-color:var(--bad);background:rgba(255,255,255,.03)}
+.verdict.bad::before{content:'✕ ';font-weight:700}
+
+.iface{border:1px solid var(--line);padding:9px;margin-bottom:7px;background:var(--panel)}
+.iface .nm{font-family:var(--disp);font-weight:600;letter-spacing:1px;font-size:13px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl td,.tbl th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}
+.tbl th{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);font-weight:400}
+.pill{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--line2);padding:1px 6px;color:var(--dim)}
+.pill.r{color:var(--paper);border-color:var(--line2)}
+.pill.h{color:var(--paper2);border-color:var(--line2)}
+.pill.s{color:var(--paper2)}
+.taskcard{border:1px solid var(--line);padding:11px;margin-bottom:8px;background:var(--ink2)}
+.taskcard.on{border-color:var(--paper)}
+.taskcard .tt{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.5px}
+.taskcard .done{color:var(--ok)}
+.ref h3{font-family:var(--disp);font-size:15px;letter-spacing:1px;margin:12px 0 4px;color:var(--paper)}
+.ref p{font-size:12.5px;color:var(--paper2);margin-bottom:6px}
+.ref code{background:#060606;border:1px solid var(--line2);padding:1px 5px;color:var(--paper)}
+.q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;min-width:17px;
+  border:1px solid var(--line2);border-radius:50%;color:var(--dim);font-size:10.5px;font-weight:600;
+  margin-left:6px;vertical-align:middle;padding:0;line-height:1}
+.q:hover,.q:focus-visible{border-color:var(--paper);color:var(--paper);outline:none}
+h2.sec .q{margin-left:8px}
+.scrim{position:fixed;inset:0;background:rgba(4,12,17,.78);display:none;z-index:60;align-items:flex-end;justify-content:center}
+.scrim.on{display:flex}
+.sheet{background:var(--ink2);border:1px solid var(--line2);border-bottom:none;width:100%;max-width:680px;
+  max-height:82vh;overflow:auto;padding:16px 16px 22px;animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(14px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h4{font-family:var(--disp);font-weight:600;font-size:18px;letter-spacing:.5px;margin-bottom:3px}
+.sheet .kicker{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--paper2);margin-bottom:9px}
+.sheet p{font-size:13px;color:var(--paper2);margin-bottom:9px;line-height:1.65}
+.sheet p b{color:var(--paper)}
+.sheet code{background:#060606;border:1px solid var(--line2);padding:1px 5px;color:var(--paper);font-size:12px}
+.sheet .ex{background:#060606;border-left:2px solid var(--paper);padding:8px 10px;font-size:12.5px;color:var(--paper2);margin-bottom:9px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="logo">PATCH</span>
+    <span class="tag">мережева лабораторія</span>
+    <button class="ib" id="installBtn" style="display:none;margin-left:auto" aria-label="встановити застосунок"><svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4 20h16"/></svg><span>встановити</span></button>
+    <span class="taskchip" id="taskChip">вільний режим</span>
+  </div>
+</header>
+<nav id="nav"></nav>
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+<main>
+  <section class="tab on" id="tab-map">
+    <div class="card" style="padding:9px">
+      <div class="ibrow" id="mapTools"></div>
+      <div class="hint" id="mapHint" style="margin-top:4px"></div>
+    </div>
+    <div class="canvaswrap"><div id="svgMount"></div></div>
+    <div class="legend">
+      <span><i style="background:var(--cu)"></i>кабель</span>
+      <span><i style="background:var(--patch)"></i>шлях пакета</span>
+      <span><i style="background:var(--bad)"></i>пакет загубився тут</span>
+      <span>тягни пристрій пальцем, торкнись — відкриються налаштування<button class="q" data-help="map.drag" aria-label="довідка">?</button></span>
+    </div>
+    <div id="mapSel"></div>
+  </section>
+
+  <section class="tab" id="tab-dev"><div id="devMount"></div></section>
+
+  <section class="tab" id="tab-run">
+    <h2 class="sec">Перевірка звʼязку<button class="q" data-help="check" aria-label="довідка">?</button></h2>
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <div style="flex:1;min-width:120px"><label class="f">звідки</label><select id="runSrc" style="width:100%"></select></div>
+        <div style="flex:1;min-width:120px"><label class="f">куди (IP)</label><input type="text" id="runDst" placeholder="192.168.1.20" style="width:100%"></div>
+      </div>
+      <div class="ibrow" style="align-items:center">
+        <button class="ib on" id="pingBtn"><svg viewBox="0 0 24 24"><path d="M3 12h13"/><path d="M12 7l5 5-5 5"/><circle cx="20" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg><span>ping</span></button>
+        <button class="ib" id="trBtn"><svg viewBox="0 0 24 24"><path d="M3 12h2M8 12h2M13 12h2"/><path d="M14 7l5 5-5 5"/></svg><span>маршрут</span></button>
+        <button class="ib" id="anBtn"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg><span>розібрати</span></button>
+        <button class="ib" id="portBtn"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M17 9v6M20 10v4"/></svg><span>порт</span></button>
+        <input type="number" id="runPort" value="8080" style="width:74px">
+        <button class="q" data-help="ping" aria-label="довідка" style="align-self:center">?</button>
+      </div>
+    </div>
+    <div id="runOut"></div>
+  </section>
+
+  <section class="tab" id="tab-tutor"><div id="tutorMount"></div></section>
+  <section class="tab" id="tab-task"><div id="taskMount"></div></section>
+
+  <section class="tab" id="tab-ref">
+    <div class="card ref">
+      <h3>Маска — це межа «свої / чужі»</h3>
+      <p>Хост порівнює адресу призначення зі своєю через маску. Збіглась мережева частина — вважає адресата сусідом і кричить у кабель напряму. Не збіглась — віддає пакет шлюзу. Тому <code>/8</code> замість <code>/24</code> ламає звʼязок не «десь у роутері», а в голові самого хоста: він навіть не спробує звернутись до шлюзу.</p>
+      <h3>Шлюз за замовчуванням</h3>
+      <p>Це запис <code>0.0.0.0/0</code> у таблиці: «усе, що я не впізнав, — сюди». Шлюз має бути в тій самій підмережі, що й інтерфейс хоста, інакше пакет нікуди не піде: до шлюзу теж треба вміти достукатись.</p>
+      <h3>Найдовший префікс виграє</h3>
+      <p>Якщо адреса підходить під кілька маршрутів, обирається той, у якого маска довша: <code>/24</code> точніший за <code>/16</code>, а <code>/16</code> точніший за <code>/0</code>. Тому окремий маршрут завжди сильніший за дефолтний.</p>
+      <h3>Відповідь — це окремий пакет</h3>
+      <p>Найчастіша пастка: запит дійшов, а відповідь загубилась, бо на зворотному шляху немає маршруту. У лабораторії це видно окремо — трасування показує обидва напрямки.</p>
+      <h3>TTL і traceroute</h3>
+      <p>Кожен роутер зменшує TTL на одиницю. Дійшов до нуля — пакет викидається, а відправнику летить повідомлення. Traceroute зловживає цим навмисне: шле пакети з TTL 1, 2, 3… і збирає імена тих, хто скаржиться.</p>
+      <h3>NAT</h3>
+      <p>Приватні адреси (<code>10.x</code>, <code>172.16–31.x</code>, <code>192.168.x</code>) в інтернеті не маршрутизуються. Роутер підміняє адресу відправника на свою зовнішню й памʼятає підміну, щоб повернути відповідь. Тому зсередини назовні працює, а ззовні всередину — ні, поки ви явно не пробросите порт.</p>
+      <h3>Проброс порту</h3>
+      <p>Правило «усе, що прийшло на мою зовнішню адресу на порт N, віддай на внутрішній хост». Це єдиний спосіб дістатись сервера за NAT, і саме тому його не варто відкривати бездумно.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ===================== адресна арифметика: IPv4 та IPv6 ===================== */
+function ipToInt(s){
+  if(typeof s!=='string')return null;
+  const p=s.trim().split('.');
+  if(p.length!==4)return null;
+  let v=0;
+  for(const x of p){
+    if(!/^\d{1,3}$/.test(x))return null;
+    const n=+x; if(n>255)return null;
+    v=(v*256)+n;
+  }
+  return v>>>0;
+}
+function intToIp(v){return [(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255].join('.');}
+function v6ToBig(s){
+  s=String(s).trim().toLowerCase();
+  if(!s||/[^0-9a-f:]/.test(s))return null;
+  if(s.indexOf(':')<0)return null;
+  const parts=s.split('::');
+  if(parts.length>2)return null;
+  const head=parts[0]?parts[0].split(':'):[];
+  const tail=(parts.length===2&&parts[1])?parts[1].split(':'):[];
+  let groups;
+  if(parts.length===1){ if(head.length!==8)return null; groups=head; }
+  else{
+    const fill=8-head.length-tail.length;
+    if(fill<1)return null;
+    groups=head.concat(new Array(fill).fill('0'),tail);
+  }
+  let n=0n;
+  for(const g of groups){
+    if(!/^[0-9a-f]{1,4}$/.test(g))return null;
+    n=(n<<16n)|BigInt(parseInt(g,16));
+  }
+  return n;
+}
+function bigToV6(n){
+  const g=[];
+  for(let i=7;i>=0;i--)g.push(Number((n>>BigInt(i*16))&0xffffn).toString(16));
+  /* стискаємо найдовшу послідовність нулів */
+  let bi=-1,bl=0,ci=-1,cl=0;
+  g.forEach((x,i)=>{
+    if(x==='0'){ if(ci<0){ci=i;cl=1;}else cl++; if(cl>bl){bl=cl;bi=ci;} }
+    else{ci=-1;cl=0;}
+  });
+  if(bl<2)return g.join(':');
+  return (g.slice(0,bi).join(':'))+'::'+(g.slice(bi+bl).join(':'));
+}
+/* адреса всередині — {f:4|6, n:BigInt} */
+function parseIp(s){
+  if(typeof s!=='string')return null;
+  s=s.trim(); if(!s)return null;
+  if(s.indexOf(':')>=0){const n=v6ToBig(s);return n===null?null:{f:6,n};}
+  const v=ipToInt(s); return v===null?null:{f:4,n:BigInt(v)};
+}
+function fmtIp(a){return !a?'':(a.f===4?intToIp(Number(a.n)):bigToV6(a.n));}
+function bitsOf(f){return f===4?32:128;}
+function maskBig(f,p){
+  const b=bitsOf(f); p=Math.max(0,Math.min(b,+p||0));
+  return p===0?0n:(((1n<<BigInt(p))-1n)<<BigInt(b-p));
+}
+function netA(a,p){return {f:a.f,n:(a.n&maskBig(a.f,p))};}
+function sameA(a,b,p){return !!a&&!!b&&a.f===b.f&&(a.n&maskBig(a.f,p))===(b.n&maskBig(b.f,p));}
+function eqA(a,b){return !!a&&!!b&&a.f===b.f&&a.n===b.n;}
+function defRoute(f){return f===6?'::':'0.0.0.0';}
+function isCgnat(a){
+  if(!a||a.f!==4)return false;
+  const v=Number(a.n),x=(v>>>24)&255,y=(v>>>16)&255;
+  return x===100&&y>=64&&y<=127;
+}
+function isPrivate4(a){
+  if(!a||a.f!==4)return false;
+  const v=Number(a.n),x=(v>>>24)&255,y=(v>>>16)&255;
+  return x===10 || (x===192&&y===168) || (x===172&&y>=16&&y<=31) || isCgnat(a);
+}
+/* до якого діапазону належить адреса і що з цього випливає */
+function classify(a){
+  if(!a)return null;
+  if(a.f===4){
+    const v=Number(a.n), o=[(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255];
+    const inN=(s,p)=>sameA(a,parseIp(s),p);
+    if(v===0xFFFFFFFF)return {n:'широкомовна',r:'255.255.255.255',ok:false,s:'сегмент',d:'«Усім у цьому сегменті». Далі роутера не йде. В IPv6 такого поняття немає взагалі.'};
+    if(inN('0.0.0.0',8))return {n:'невизначена',r:'0.0.0.0/8',ok:false,s:'службова',d:'«Я ще не знаю своєї адреси». Так виглядає хост, який щойно ввімкнули і який шукає DHCP.'};
+    if(inN('127.0.0.0',8))return {n:'петля (loopback)',r:'127.0.0.0/8',ok:false,s:'сам пристрій',d:'Адреса самого себе. Пакет не виходить із пристрою — ping 127.0.0.1 перевіряє лише те, що працює мережевий стек ОС, і нічого більше.'};
+    if(inN('169.254.0.0',16))return {n:'link-local (APIPA)',r:'169.254.0.0/16',ok:false,s:'кабель',d:'Хост призначив її собі сам, бо DHCP не відповів. Це не «мережа є» — це «мережі немає, я вигадав адресу». Далі кабелю така адреса не йде.'};
+    if(inN('10.0.0.0',8)||inN('172.16.0.0',12)||inN('192.168.0.0',16))
+      return {n:'приватна',r:o[0]===10?'10.0.0.0/8':(o[0]===172?'172.16.0.0/12':'192.168.0.0/16'),ok:false,s:'своя мережа',d:'Живе всередині вашої мережі. В інтернеті не маршрутизується — назовні виходить лише через NAT.'};
+    if(inN('100.64.0.0',10))return {n:'CGNAT оператора',r:'100.64.0.0/10',ok:false,s:'мережа оператора',d:'Приватна адреса, видана провайдером. Ви за спільним NAT, ззовні до вас не достукатись.'};
+    if(inN('192.0.2.0',24)||inN('198.51.100.0',24)||inN('203.0.113.0',24))
+      return {n:'для документації',r:'TEST-NET',ok:false,s:'приклади',d:'Зарезервовані для прикладів у книжках і лабораторіях — саме тому вони тут. У справжньому інтернеті їх не буває.'};
+    if(inN('224.0.0.0',4))return {n:'групова (multicast)',r:'224.0.0.0/4',ok:false,s:'група',d:'Одна адреса — багато отримувачів, але лише ті, хто підписався. Так працюють маршрутні протоколи й IPTV.'};
+    if(inN('240.0.0.0',4))return {n:'зарезервована (клас E)',r:'240.0.0.0/4',ok:false,s:'ніде',d:'Відкладена «на потім» ще в 1980-х. Досі не використовується.'};
+    return {n:'глобальна (публічна)',r:'решта простору',ok:true,s:'інтернет',d:'Маршрутизується в інтернеті. Таких адрес близько 3,7 мільярда на всю планету — тому за них і платять.'};
+  }
+  if(eqA(a,parseIp('::')))return {n:'невизначена',r:'::/128',ok:false,s:'службова',d:'«Адреси ще немає». Аналог 0.0.0.0.'};
+  if(eqA(a,parseIp('::1')))return {n:'петля (loopback)',r:'::1/128',ok:false,s:'сам пристрій',d:'Аналог 127.0.0.1, але рівно одна адреса замість цілої мережі — в IPv6 не було потреби економити на цьому.'};
+  if(sameA(a,parseIp('2001:db8::'),32))return {n:'для документації',r:'2001:db8::/32',ok:false,s:'приклади',d:'Зарезервована для прикладів. Усі адреси в цій лабораторії — звідси.'};
+  if(sameA(a,parseIp('fe80::'),10))return {n:'link-local',r:'fe80::/10',ok:false,s:'кабель',d:'Є на кожному інтерфейсі завжди, формується автоматично. Через неї працює пошук сусідів і спілкування з роутером. Але за межі кабелю вона не виходить — сайт по ній не відкриється.'};
+  if(sameA(a,parseIp('fc00::'),7))return {n:'унікальна локальна (ULA)',r:'fc00::/7',ok:false,s:'своя мережа',d:'Аналог приватних адрес IPv4: для внутрішньої мережі, в інтернет не маршрутизується.'};
+  if(sameA(a,parseIp('ff00::'),8))return {n:'групова (multicast)',r:'ff00::/8',ok:false,s:'група',d:'Замінила широкомовлення IPv4. Прокидаються лише підписані пристрої, а не вся мережа.'};
+  if(sameA(a,parseIp('2000::'),3))return {n:'глобальна (публічна)',r:'2000::/3',ok:true,s:'інтернет',d:'Звичайна адреса IPv6, маршрутизується глобально. Простір такий великий, що видавати їх по одній немає сенсу — абоненту дають цілу підмережу.'};
+  return {n:'зарезервована',r:'решта простору',ok:false,s:'ніде',d:'Ще не роздана під жодне призначення.'};
+}
+function isLinkLocal6(a){return !!a&&a.f===6&&((a.n>>118n)===0x3fan);} /* fe80::/10 */
+function isUla6(a){return !!a&&a.f===6&&((a.n>>121n)===0x7en);}        /* fc00::/7 */
+/* усі адреси інтерфейсу: [{a,prefix}] */
+function ifAddrs(f){
+  const out=[];
+  const a4=parseIp(f.ip||''); if(a4&&a4.f===4)out.push({a:a4,prefix:+f.prefix||24});
+  const a6=parseIp(f.ip6||''); if(a6&&a6.f===6)out.push({a:a6,prefix:(f.prefix6===undefined?64:+f.prefix6)});
+  return out;
+}
+function ifHas(f,a){return ifAddrs(f).some(x=>eqA(x.a,a));}
+function ifAny(f){return !!(f.ip||f.ip6);}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ===================== піктограми ===================== */
+const SVGI={
+ host:'<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M2 19h20"/>',
+ router:'<rect x="2" y="12" width="20" height="8" rx="1.5"/><circle cx="6" cy="16" r=".9" fill="currentColor" stroke="none"/><circle cx="9.5" cy="16" r=".9" fill="currentColor" stroke="none"/><path d="M12 9V4M12 4l-2.5 2.5M12 4l2.5 2.5M17 9V4"/>',
+ sw:'<rect x="2" y="8" width="20" height="9" rx="1.5"/><path d="M6 17v3M10 17v3M14 17v3M18 17v3"/>',
+ ap:'<path d="M12 20v-6"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M8.5 8.5a5 5 0 0 1 7 0M5.5 5.5a9 9 0 0 1 13 0"/><path d="M9 20h6"/>',
+ rep:'<path d="M12 15.5v5M9 20.5h6"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><path d="M8.8 8.8a4.5 4.5 0 0 1 6.4 0M15.2 15.2a4.5 4.5 0 0 1-6.4 0M5.8 5.8a8.7 8.7 0 0 1 12.4 0"/>',
+ modem:'<rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 16.5h5"/><path d="M17 10V4M14 10V6.5M20 10V6.5"/>',
+ link:'<circle cx="5" cy="12" r="2.4"/><circle cx="19" cy="12" r="2.4"/><path d="M7.5 12h9"/>',
+ del:'<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/>',
+ map:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
+ dev:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+ check:'<path d="M2 12h4l2.5-6 4 13 3-9 2.5 2H22"/>',
+ task:'<rect x="3" y="4" width="18" height="17" rx="1.5"/><path d="M7.5 11.5l3 3 6-6.5"/>',
+ ref:'<path d="M4 4h7a2.5 2.5 0 0 1 2.5 2.5V20a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6.5v14H18a2 2 0 0 1 2 2z"/>',
+ ping:'<path d="M3 12h13"/><path d="M12 7l5 5-5 5"/><circle cx="20" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+ trace:'<path d="M3 12h2M8 12h2M13 12h2"/><path d="M14 7l5 5-5 5"/>',
+ port:'<circle cx="8" cy="12" r="4"/><path d="M12 12h9M17 9v6M20 10v4"/>',
+ zoom:'<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/>',
+ dhcp:'<path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 17.5h2"/>',
+ trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/>',
+ v6:'<path d="M3 7l3.5 9L10 7"/><path d="M14 7v9h5M14 11.5h5M19 7v9"/>',
+ ai:'<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'
+};
+function icon(name){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(SVGI[name]||'')+'</svg>';}
+function ibtn(name,label,attrs){return '<button class="ib" '+(attrs||'')+'>'+icon(name)+'<span>'+label+'</span></button>';}
+
+/* ===================== довідка: пояснення до кожного елемента ===================== */
+const HELP={
+ 'map.build':{k:'схема',t:'Як збирати мережу',b:[
+   'Три кнопки додають пристрої. <b>Хост</b> — компʼютер або сервер: має одну адресу й не пересилає чужі пакети. <b>Роутер</b> — має кілька інтерфейсів у різних підмережах і пересилає пакети між ними. <b>Комутатор</b> — з’єднує кілька пристроїв в один кабельний сегмент і в маршрутизації не бере участі взагалі: у нього немає IP-адреси.',
+   '<b>Мобільний роутер</b> — те саме, але зовнішній інтерфейс дивиться в мережу оператора: адресу туди видаєте не ви.',
+   '<b>Точка доступу</b> і <b>репітер</b> кабелю не потребують: вони зʼєднуються по радіо самі, щойно опиняються в зоні покриття одне одного. Коло навколо них — і є ця зона.',
+   '<b>Зʼєднати</b> — натисни кнопку, потім по черзі торкнись двох пристроїв. Кабель займе перший вільний порт з кожного боку; у комутатора порти додаються самі.',
+   '<b>Видалити</b> — натисни кнопку, потім торкнись пристрою. Кабелі до нього зникнуть разом із ним.']},
+ 'map.drag':{k:'схема',t:'Перетягування та вибір',b:[
+   'Пристрій рухається пальцем або мишею — просто тягни. Розташування зберігається, на роботу мережі воно не впливає: це креслення, а не фізична відстань.',
+   'Коротке торкання без руху обирає пристрій — унизу зʼявиться картка, а вкладка «Пристрій» покаже його налаштування.',
+   'Синім підсвічується шлях останнього пакета, червоним хрестом — той, на кому все обірвалось.']},
+ 'device.host':{k:'пристрій',t:'Хост',b:[
+   'Кінцевий пристрій: компʼютер, телефон, сервер. Має зазвичай одну адресу й одне правило поведінки, яке пояснює половину всіх «у мене не працює».',
+   '<b>Хост не пересилає чужі пакети.</b> Якщо кадр приїхав до нього, а адреса призначення не його — пакет просто вмирає. Пересиланням займаються тільки роутери.',
+   'Свій вихідний пакет хост відправляє так: порівнює адресу призначення зі своєю через маску. Свій — кричить у кабель напряму. Чужий — віддає шлюзу за замовчуванням. Немає шлюза — пакет нікуди не піде.']},
+ 'device.router':{k:'пристрій',t:'Роутер',b:[
+   'Пристрій із кількома інтерфейсами в різних підмережах. Його робота — прийняти пакет, знайти в таблиці найточніший маршрут і віддати далі, зменшивши TTL на одиницю.',
+   'Роутер не «знає інтернет». Він знає лише свої підключені мережі та те, що йому прописали руками (або що він вивчив по протоколу маршрутизації — цього в лабораторії немає навмисно, щоб було видно кожен запис).',
+   'Типова помилка: маршрут прописано в один бік. Запит дійде, відповідь — ні.']},
+ 'device.switch':{k:'пристрій',t:'Комутатор',b:[
+   'Працює на рівень нижче за роутер. Він не дивиться на IP-адреси взагалі й не має власної адреси в цій лабораторії.',
+   'Усе, що ввімкнене в один комутатор, опиняється в <b>одному кабельному сегменті</b>: пристрої можуть звертатись один до одного напряму, якщо їхні адреси в одній підмережі.',
+   'Комутатор не полагодить неправильні адреси. Два хости в одному комутаторі, але в різних підмережах, одне одного не побачать — і це не поломка кабелю.']},
+ 'device.cloud':{k:'пристрій',t:'Зовнішня мережа',b:[
+   'Умовний «інтернет»: пристрій із зовнішньою адресою, який відповідає на звернення. У завданні з NAT у нього дві адреси — та, що дивиться на ваш роутер, і 8.8.8.8.',
+   'Він поводиться як хост: відповідає на своє й не пересилає чуже. Саме тому відповідь вашому приватному 192.168.x без NAT він доставити не може — у нього немає туди маршруту, і ні в кого в інтернеті його немає.']},
+ 'iface':{k:'пристрій',t:'Інтерфейси',b:[
+   'Інтерфейс — це порт із адресою. Саме на інтерфейсі живе IP, а не «на компʼютері»: у роутера їх кілька, і кожен у своїй підмережі.',
+   'Кожен налаштований інтерфейс автоматично створює запис у таблиці маршрутизації — «підключена мережа». Тому роутер із двома інтерфейсами вже вміє передавати між двома підмережами без жодного статичного маршруту.',
+   'Вимкнений порт зникає з таблиці разом зі своєю мережею — зручний спосіб побачити, що станеться при обриві.']},
+ 'ip':{k:'адресація',t:'IP-адреса',b:[
+   'Чотири числа від 0 до 255. Адреса ділиться маскою на <b>мережеву частину</b> (спільну для всіх у підмережі) і <b>хостову</b> (унікальну).',
+   'Дві адреси в одній підмережі мають збігатись у мережевій частині. <code>192.168.1.10/24</code> і <code>192.168.2.20/24</code> — це вже різні підмережі, і без роутера вони не спілкуються, скільки б кабелів ви не тягнули.',
+   'Приватні діапазони <code>10.x</code>, <code>172.16–31.x</code>, <code>192.168.x</code> в інтернеті не маршрутизуються — для виходу назовні потрібен NAT.']},
+ 'prefix':{k:'адресація',t:'Префікс і маска',b:[
+   'Префікс — це кількість одиничних бітів у масці. <code>/24</code> означає маску <code>255.255.255.0</code>: перші три числа — мережа, останнє — хост.',
+   'Чим менший префікс, тим ширша мережа: <code>/8</code> — це 16 мільйонів адрес, <code>/24</code> — 254 хости, <code>/30</code> — рівно два (класика для лінка між роутерами).',
+   '<b>Маска — це не косметика.</b> Хост із неправильною маскою вважає чужу адресу своєю сусідкою і навіть не намагається звернутись до шлюза. Пакет летить у порожній кабель, і жодні налаштування роутера цього не виправлять.']},
+ 'port.updown':{k:'пристрій',t:'Вимкнути порт',b:[
+   'Імітує обрив: інтерфейс перестає працювати, його мережа зникає з таблиці маршрутизації, сусіди перестають його бачити.',
+   'Корисно, щоб перевірити резервний шлях або побачити, як саме виглядає поломка в трасуванні.']},
+ 'cable':{k:'схема',t:'Кабель',b:[
+   'Зʼєднує два порти. Кабель нічого не знає про адреси: він лише робить два порти сусідами в одному сегменті.',
+   'Кабель між портами різних підмереж — не помилка сам по собі, але й не зробить звʼязку. Адреси мають збігатись у мережевій частині.']},
+ 'routes':{k:'маршрутизація',t:'Таблиця маршрутизації',b:[
+   'Список правил «яку мережу куди віддавати». Пристрій перебирає всі підхожі записи й обирає <b>найточніший — з найдовшим префіксом</b>.',
+   '<code>10.0.5.0/24</code> точніший за <code>10.0.0.0/16</code>, а той точніший за <code>0.0.0.0/0</code>. Тому окремий маршрут завжди сильніший за шлюз за замовчуванням, і саме так роблять винятки.',
+   'Записи «інтерфейс» зʼявляються самі з налаштованих адрес і видалити їх не можна — тільки вимкнувши чи змінивши інтерфейс. Записи «статичний» додаєте ви.']},
+ 'gateway':{k:'маршрутизація',t:'Шлюз за замовчуванням',b:[
+   'Це звичайний маршрут <code>0.0.0.0/0</code>: «усе, чого я не впізнав, — сюди». Маска нульової довжини підходить під будь-яку адресу, тому він спрацьовує останнім.',
+   '<b>Шлюз мусить бути в тій самій підмережі, що й ваш інтерфейс.</b> До шлюза теж треба вміти достукатись напряму — інакше виходить замкнене коло: щоб дістатись шлюза, потрібен шлюз.',
+   'Кнопка «швидко: шлюз за замовчуванням» бере адресу з поля «через шлюз» і замінює наявний дефолтний маршрут.']},
+ 'route.static':{k:'маршрутизація',t:'Статичний маршрут',b:[
+   'Ручний запис: «мережа X досяжна через сусіда Y». Потрібен, коли пристрій не має цієї мережі на своїх інтерфейсах і не хоче віддавати все дефолтним шляхом.',
+   'Найчастіша помилка — прописати маршрут лише на одному кінці. Перевірка покаже «запит дійшов, відповідь загубилась»: зворотний шлях — це окрема задача.']},
+ 'nat':{k:'nat',t:'NAT',b:[
+   'Роутер підміняє адресу відправника з приватної на свою зовнішню, запамʼятовує підміну й повертає відповідь тому, хто питав.',
+   'Навіщо: приватні адреси в інтернеті не маршрутизуються. Без NAT ваш запит до <code>8.8.8.8</code> дійде — а відповідь ні, бо на тому кінці немає маршруту до <code>192.168.x</code>. Саме це видно в трасуванні до вмикання NAT.',
+   'Побічний ефект: зсередини назовні працює, а ззовні всередину — ні. Це не безпека, а наслідок механіки, але саме тому NAT довго вважали «фаєрволом».']},
+ 'nat.out':{k:'nat',t:'Зовнішній інтерфейс',b:[
+   'Той порт, що дивиться в бік провайдера. Підміна відбувається тільки на пакетах, які виходять через нього.',
+   'Помилково вказаний внутрішній інтерфейс — і NAT або нічого не робить, або ламає локальний звʼязок.']},
+ 'fwd':{k:'nat',t:'Проброс порту',b:[
+   'Правило «усе, що прийшло на мою зовнішню адресу на порт N, віддай внутрішньому хосту». Єдиний спосіб дістатись сервера за NAT ззовні.',
+   'Перевіряється кнопкою «порт» на вкладці «Перевірка»: звернення з зовнішньої мережі на адресу роутера має доїхати до внутрішнього хоста.',
+   'У житті кожен відкритий порт — це двері назовні. Пробросити 22 або 3389 «щоб зручніше» — найпоширеніший спосіб віддати машину чужим людям.']},
+ 'check':{k:'перевірка',t:'Як читати результат',b:[
+   'Перевірка показує <b>два окремих блоки</b>: «Туди» і «Назад». Це не формальність — запит і відповідь ідуть різними записами в таблицях, і зламатись може будь-який з них.',
+   'Якщо запит дійшов, а відповідь загубилась, у житті ви побачите просто мовчання: ping мовчить так само, як при повністю відсутньому маршруті. Тут причина названа прямо.',
+   'Кожен рядок трасування — це одне рішення одного пристрою: який маршрут обрано, чому саме він, куди пішов пакет.']},
+ 'ping':{k:'перевірка',t:'ping',b:[
+   'Відправляє пакет і чекає відповіді. Успіх означає, що працює <b>обидва</b> напрямки — тому мовчазний ping ще не каже, у який бік проблема.',
+   'Тут відправник обирається чесно: адреса береться з того інтерфейсу, через який реально піде пакет.']},
+ 'traceroute':{k:'перевірка',t:'traceroute',b:[
+   'Шле пакети з TTL=1, потім 2, потім 3. Кожен роутер зменшує TTL на одиницю; той, у кого лічильник дійшов до нуля, викидає пакет і скаржиться відправнику. Зі скарг збирається список хопів.',
+   'Останній рядок — це вже сам адресат, який відповів нормально. Якщо список обривається раніше, місце обриву й є місцем проблеми.']},
+ 'porttest':{k:'перевірка',t:'Перевірка порту',b:[
+   'Імітує зʼєднання на конкретний порт — так перевіряють проброс. На відміну від ping, тут важливо, до <b>кого саме</b> доїхало зʼєднання: роутер має віддати його внутрішньому хосту.',
+   'Якщо правила пробросу немає, роутер відкидає зʼєднання — і в трасуванні буде видно саме це, а не «немає маршруту».']},
+ 'tutor':{k:'репетитор',t:'Як влаштований розбір схеми',b:[
+   'Розбір не «здогадується» — він перевіряє вашу конфігурацію тими самими правилами, за якими рухається пакет: дублікати адрес, шлюз поза підмережею, різні маски в одному сегменті, APIPA замість справжньої адреси, пул DHCP не з тієї мережі, вимкнений порт із підключеним кабелем, пристрій поза зоною Wi-Fi.',
+   'Таблиця «хто кого бачить» — це справжні пінги між усіма пристроями, з причиною для кожної невдачі. Саме з неї варто починати, коли «щось не працює».',
+   'Усе це рахується на вашому пристрої й нікуди не надсилається. Інтернет для цього не потрібен.',
+   'Підключення живої моделі — окрема необовʼязкова річ для вільних питань. Без неї репетитор працює повноцінно.']},
+ 'ipv6toggle':{k:'ipv6',t:'Перемикач IPv6',b:[
+   'IPv6 можна вимкнути, щоб він не заважав: поля адрес, маршрути й підписи зникнуть, лишиться чистий IPv4. Рушій при цьому не змінюється — вимикається саме показ.',
+   'Завдання, які без IPv6 не мають сенсу, вмикають його самі при відкритті. Вимкнути назад можна тією ж кнопкою на схемі.',
+   'Порада: спершу впевнено освойте IPv4 — маски, шлюзи, маршрути, NAT. IPv6 після цього вивчається за вечір, бо різниця лише в записі адрес і у відсутності NAT.']},
+ 'wifi':{k:'wi-fi',t:'Точка доступу — це не роутер',b:[
+   'Точка доступу працює на тому самому рівні, що й комутатор: вона зʼєднує бездротових клієнтів із кабельною мережею в <b>один сегмент</b>. Власної адреси для передавання даних їй не потрібно, підмережу вона не створює й маршрутів не має.',
+   'Тому «підключився до Wi-Fi» означає лише те, що ви опинились в одному сегменті з роутером. Адресу вам видасть роутер по DHCP, і шлюзом буде він, а не точка.',
+   'У домашньому «роутері» все це в одній коробці: маршрутизатор, комутатор, точка доступу й DHCP-сервер. Через це їх і плутають. У лабораторії вони розділені навмисно — щоб було видно, хто за що відповідає.',
+   'Пунктирне коло на схемі — зона покриття. Перетягніть пристрій за межі кола, і він відваляться: рамка стане пунктирною, а в підписі зʼявиться «поза зоною».']},
+ 'repeater':{k:'wi-fi',t:'Репітер',b:[
+   'Репітер (він же підсилювач або extender) приймає сигнал точки й одразу переповідає його далі. Клієнти за ним потрапляють у <b>ту саму мережу</b>: та сама підмережа, той самий шлюз, той самий DHCP-сервер.',
+   'Головна умова, про яку забувають: репітер має чути точку. Поставите його там, де сигнал уже поганий, — він старанно ретранслюватиме поганий сигнал. Ставлять приблизно на половині шляху.',
+   '<b>Ціна:</b> одне й те саме радіо і приймає, і передає, тому реальна швидкість у клієнтів за репітером приблизно вдвічі менша. Кабель або mesh із окремим каналом такої втрати не мають.',
+   'Не плутайте з другим роутером: роутер створює <b>нову</b> підмережу зі своїм NAT, і тоді пристрої з різних половин квартири перестають бачити одне одного напряму. Репітер лишає одну мережу.']},
+ 'dhcp':{k:'dhcp',t:'DHCP — хто роздає адреси',b:[
+   'Замість того щоб вписувати адресу руками на кожному пристрої, її видає сервер. Клієнт кричить у сегмент «мені потрібна адреса», сервер відповідає, видає адресу з пулу, маску, шлюз — і записує оренду.',
+   '<b>Сервер має бути в тому самому сегменті.</b> Це ключове: запит не проходить крізь роутер. Тому в лабораторії ноутбук за репітером отримає адресу лише тоді, коли радіо реально доносить його до сегмента роутера.',
+   'Якщо сервер не відповів, хост не лишається без адреси — він вигадує собі <code>169.254.x.x</code> сам. Саме тому ця адреса означає «DHCP не відповів», а не «мережа працює».',
+   'Пул скінчився — нові пристрої теж отримають 169.254.x. Класична поломка в офісі, де пул на 20 адрес, а людей стало 30.',
+   'Оренда — це запис «ця адреса зайнята цим пристроєм». Звільніть оренду — і адреса повернеться в пул. Конфлікт двох однакових адрес виникає, коли комусь прописали статичну адресу всередині пулу.']},
+ 'ranges':{k:'адресація',t:'Діапазони: не всі адреси однакові',b:[
+   'Адреса сама по собі каже, куди вона може дійти. Це не питання налаштувань — це поділ простору, узгоджений глобально, і жоден роутер в інтернеті не понесе пакет туди, куди не належить.',
+   '<b>IPv4:</b> <code>10/8</code>, <code>172.16/12</code>, <code>192.168/16</code> — приватні, живуть у вашій мережі. <code>100.64/10</code> — CGNAT оператора. <code>127/8</code> — сам пристрій. <code>169.254/16</code> — хост вигадав адресу сам, бо DHCP не відповів: ознака поломки, а не мережі. <code>224/4</code> — групові. Решта — публічні, і саме за них платять.',
+   '<b>IPv6:</b> <code>2000::/3</code> — звичайні публічні. <code>fe80::/10</code> — link-local, є завжди на кожному інтерфейсі, працює пошук сусідів, але далі кабелю не йде. <code>fc00::/7</code> — локальні, аналог приватних. <code>ff00::/8</code> — групові. <code>::1</code> — сам пристрій.',
+   '<b>Важлива різниця:</b> у IPv4 адреса <code>169.254.x</code> означає «щось зламалось». У IPv6 <code>fe80::</code> — норма, вона є завжди й одночасно з глобальною. Плутати їх не варто: link-local без глобальної адреси — це така сама відсутність мережі.',
+   'Класи A, B, C, D, E, які досі згадують у підручниках, скасовані ще в 1993 році. Їх замінив CIDR, де маска будь-якої довжини — саме тому в лабораторії трапляються /10, /26 і /30.',
+   'Кнопка «розібрати адресу» на вкладці «Перевірка» показує діапазон будь-якої адреси, чи маршрутизується вона в інтернеті та як вона виглядає з різними масками.']},
+ 'ipv6':{k:'ipv6',t:'IPv6 — друга мережа на тому самому кабелі',b:[
+   'IPv6 — це не «нова версія IPv4», а окремий стек. Адреси інші (128 біт замість 32), таблиця маршрутизації окрема, і пакет IPv4 ніколи не піде на адресу IPv6. Пристрій із двома адресами (дуал-стек) фактично живе у двох мережах одночасно.',
+   'Запис коротший, ніж здається: підряд ідучі нулі стискаються одним <code>::</code> (лише раз в адресі), провідні нулі в групі не пишуться. <code>2001:0db8:0010:0000:0000:0000:0000:0010</code> — це <code>2001:db8:10::10</code>.',
+   '<b>NAT тут не потрібен.</b> Адрес вистачає всім, тому кожен пристрій має власну публічну адресу й лишається собою від початку до кінця маршруту. Ніяких підмін, ніякого CGNAT, ніякого пробросу портів — вхідне зʼєднання приходить прямо до пристрою.',
+   'Зворотний бік тієї ж медалі: якщо ваш пристрій має публічну адресу IPv6, він видимий з інтернету напряму. Роль «випадкового захисту», яку виконував NAT, тепер має виконувати фаєрвол — свідомо, а не випадково.',
+   'Діапазони, які варто впізнавати: <code>2000::/3</code> — звичайні глобальні адреси; <code>fe80::/10</code> — link-local, живуть лише в межах одного кабелю й далі роутера не йдуть; <code>fc00::/7</code> — унікальні локальні, аналог приватних.']},
+ 'v6prefix':{k:'ipv6',t:'Префікс IPv6',b:[
+   'Майже завжди <code>/64</code>. Не тому, що адрес шкода, а тому, що нижня половина адреси відведена під ідентифікатор інтерфейсу: на цьому побудовані автоналаштування (SLAAC), коли пристрій формує собі адресу сам, отримавши від роутера лише префікс.',
+   'Провайдер зазвичай видає клієнту цілий <code>/56</code> або <code>/48</code> — це десятки тисяч підмереж по /64. Порівняйте з IPv4, де за один зайвий адрес доводиться платити.',
+   '<code>::/0</code> — маршрут за замовчуванням для IPv6, повний аналог <code>0.0.0.0/0</code>. Прописувати треба обидва: наявність одного нічого не каже про інший.']},
+ 'device.ap':{k:'пристрій',t:'Точка доступу Wi-Fi',b:[
+   'Міст між радіо й кабелем. Має два порти: <code>lan</code> — у роутер чи комутатор, <code>wlan</code> — радіо для клієнтів. Обидва належать одному сегменту, тому бездротовий клієнт для мережі нічим не відрізняється від того, хто в кабелі.',
+   'Точка не видає адрес і не маршрутизує. Якщо ноутбук підключився, але адреси немає — шукайте DHCP-сервер на роутері, а не проблему в точці.']},
+ 'device.repeater':{k:'пристрій',t:'Репітер',b:[
+   'Повторює сигнал точки далі. Сам має лише радіо: жодного кабелю, жодної адреси, жодних маршрутів.',
+   'Працює лише в межах чужого покриття — має чути точку. Клієнти за ним лишаються в тій самій мережі, але отримують приблизно половину швидкості.']},
+ 'device.modem':{k:'пристрій',t:'Мобільний роутер',b:[
+   'Той самий роутер, тільки замість кабелю провайдера в нього вставлена SIM. Усередині — звичайна локальна мережа <code>192.168.8.0/24</code> і NAT, зовні — інтерфейс <code>wwan0</code>, адресу якому видає оператор.',
+   'Уся різниця й уся біда в тому, <b>яку адресу видає оператор</b>. Якщо публічну — поводиться як звичайний домашній роутер. Якщо з діапазону <code>100.64.0.0/10</code> — ви за CGNAT, і половина звичних речей перестає працювати.',
+   'Мобільна мережа ще й міняє адресу при кожному перепідключенні, а сеанси рвуться при переході між вежами. Тому все, що тримає постійне зʼєднання, робиться з <b>вихідним</b> підключенням від вас, а не входом до вас.']},
+ 'device.carrier':{k:'пристрій',t:'Мережа оператора',b:[
+   'Це не ваше обладнання. Тут стоїть NAT оператора, через який виходять тисячі абонентів одночасно — і його правила вам недоступні, як недоступна базова станція за вікном.',
+   'У лабораторії цей пристрій навмисно заблоковано: подивитись адреси можна, змінити — ні. Єдине, що ви можете, — замовити послугу «біла IP-адреса».',
+   'Це важлива частина картини: у реальній мережі значна частина проблем лежить на боці, куди у вас немає доступу. Правильна реакція — не «полагодити», а обійти або купити інші умови.']},
+ 'cgnat':{k:'мобільний інтернет',t:'CGNAT — чому ззовні до вас не достукатись',b:[
+   'Публічних IPv4-адрес не вистачає, тому оператори видають абонентам адреси з діапазону <code>100.64.0.0/10</code> і виводять усіх у світ через свій спільний NAT. Це і є Carrier-Grade NAT.',
+   '<b>Наслідок:</b> зовнішня адреса, яку бачить інтернет, — не ваша. Вона спільна на тисячі абонентів. Проброс порту на вашому роутері виконується чесно, але доїхати до нього ззовні нікому: пакет зупиниться на NAT оператора, у якого правил для вас немає.',
+   'Так само ламаються: доступ до домашньої камери, ігровий сервер, торенти у режимі прийому, віддалений робочий стіл. Вихідні зʼєднання при цьому працюють нормально — тому месенджери, відео й сайти жодних проблем не помічають.',
+   '<b>Як живуть із цим насправді:</b> замовляють у оператора публічну адресу (зазвичай платно), або піднімають вихідний тунель до зовнішнього сервера чи VPN, і зʼєднання йде через нього. Другий шлях працює саме тому, що ініціатива виходить зсередини.',
+   'IPv6 вирішує це принципово — адрес вистачає всім, NAT не потрібен. У мобільних мережах він часто вже є, але сервіси на тому кінці мають його підтримувати. Подивись завдання про IPv6: там вхідне зʼєднання доходить без жодного пробросу.']},
+ 'whiteip':{k:'мобільний інтернет',t:'Біла (публічна) IP-адреса',b:[
+   'Послуга оператора: замість адреси зі спільного CGNAT ваш модем отримує власну публічну адресу, яка маршрутизується з усього інтернету напряму.',
+   'Після цього проброс портів на вашому роутері починає працювати — саме він, а не «біла адреса» сама по собі, пускає зʼєднання всередину.',
+   '<b>Зворотний бік:</b> тепер ваш роутер видно всьому світу. Скани портів починаються за хвилини. Відкривати назовні варто рівно те, що потрібно, і з нормальними паролями.']},
+ 'mobile':{k:'мобільний інтернет',t:'Інтерфейси мобільного роутера',b:[
+   '<code>lan0</code> — ваша локальна мережа, звичайна приватна підмережа з NAT. Тут усе як удома.',
+   '<code>wwan0</code> — сторона оператора. Адресу сюди видаєте не ви: вона приходить від мережі й може змінюватись при кожному перепідключенні.',
+   'Подивись на неї в задачі: якщо вона з <code>100.64.x</code> — ви за CGNAT, і ззовні вас не існує. Якщо адреса публічна — ви звичайний вузол інтернету з усіма наслідками.']},
+ 'task':{k:'завдання',t:'Як влаштовані завдання',b:[
+   'Кожне завдання ставить схему заново й ламає в ній рівно одну річ. Перевірка запускає справжні пінги по вашій конфігурації — вона не звіряє відповідь зі зразком, тому працює будь-яке правильне рішення.',
+   'Порядок не випадковий: спершу одна підмережа, потім шлюзи, маска, статичні маршрути, NAT, мобільний інтернет із CGNAT і нарешті IPv6, де половини цих проблем просто немає. Кожне наступне спирається на попереднє.',
+   '«Чистий аркуш» стирає все й дає порожнє поле — там можна відтворити свою домашню або робочу мережу.']}
+};
+function q(key,label){return '<button class="q" data-help="'+key+'" aria-label="'+(label||'довідка')+'">?</button>';}
+function openHelp(key){
+  const h=HELP[key]; if(!h)return;
+  document.getElementById('sheet').innerHTML=
+    '<div class="kicker">'+esc(h.k)+'</div><h4>'+esc(h.t)+'</h4>'
+    +h.b.map(p=>'<p>'+p+'</p>').join('')
+    +'<button class="btn sm" data-closehelp="1" style="margin-top:6px">зрозуміло</button>';
+  document.getElementById('scrim').classList.add('on');
+}
+function closeHelp(){document.getElementById('scrim').classList.remove('on');}
+
+/* ===================== стан ===================== */
+const KEY='patch_netlab_v1';
+let N=null, saveT=null;
+function freshNet(){return {devices:{},links:[],seq:1,sel:null,task:null,solved:{},mode:null,pending:null,v6:false};}
+/* сховище: спершу localStorage (працює як PWA офлайн), потім запасні шляхи */
+const store={
+  async get(k){
+    try{const v=localStorage.getItem(k); if(v!=null)return v;}catch(e){}
+    try{const r=await window.storage.get(k); if(r&&r.value)return r.value;}catch(e){}
+    return null;
+  },
+  async set(k,v){
+    try{localStorage.setItem(k,v);return 'local';}catch(e){}
+    try{await window.storage.set(k,v);return 'remote';}catch(e){}
+    return null;
+  },
+  async del(k){
+    try{localStorage.removeItem(k);}catch(e){}
+    try{await window.storage.delete(k);}catch(e){}
+  }
+};
+function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{
+  const where=await store.set(KEY,JSON.stringify(N));
+  setSave(where?'збережено на пристрої':'зберегти не вдалося');
+},350);}
+async function wipe(){
+  await store.del(KEY);
+  N=freshNet();loadTask('s1');
+  setSave('дані видалено');
+}
+function load(){(async()=>{
+  try{const v=await store.get(KEY); if(v)N=JSON.parse(v);}catch(e){}
+  if(!N||!N.devices)N=freshNet();
+  if(typeof N.v6!=='boolean')N.v6=false;
+  N.mode=null;N.pending=null;
+  if(!Object.keys(N.devices).length)loadTask('s1');
+  boot();
+})();}
+
+function nid(pfx){return pfx+(N.seq++);}
+function dev(id){return N.devices[id];}
+function devList(){return Object.values(N.devices);}
+function typeName(t){
+  return t==='router'?'роутер':t==='switch'?'комутатор':t==='cloud'?'зовнішня мережа':
+         t==='modem'?'мобільний роутер':t==='carrier'?'мережа оператора':
+         t==='ap'?'точка доступу Wi-Fi':t==='repeater'?'репітер':'хост';}
+function isRouter(d){return d.type==='router'||d.type==='modem'||d.type==='carrier';}
+function isBridge(d){return d.type==='switch'||d.type==='ap'||d.type==='repeater';}
+function canDhcp(d){return isRouter(d)&&d.type!=='carrier';}
+/* радіо */
+const RANGE=140;                       /* радіус покриття в координатах схеми */
+function radioIdx(d){
+  if(d.type==='ap')return 1;           /* 0 — кабель до роутера, 1 — радіо */
+  if(d.type==='repeater')return 0;
+  const i=d.ifaces.findIndex(f=>f.wifi);
+  return i;
+}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function radioNodes(){return devList().filter(d=>d.type==='ap'||d.type==='repeater');}
+/* усі бездротові асоціації: [{ap,client,dist,hops}] */
+function wifiLinks(){
+  const out=[];
+  radioNodes().forEach(ap=>{
+    const ai=radioIdx(ap); if(ai<0||!ap.ifaces[ai]||!ap.ifaces[ai].up)return;
+    devList().forEach(d=>{
+      if(d===ap||d.type==='ap')return;
+      const di=radioIdx(d); if(di<0||!d.ifaces[di]||!d.ifaces[di].up)return;
+      if(d.type==='repeater'&&ap.type==='repeater')return;   /* репітер до репітера не чіпляємо */
+      if(distance(ap,d)<=RANGE)out.push({ap,client:d,ai,di,dist:Math.round(distance(ap,d))});
+    });
+  });
+  return out;
+}
+function wifiOrphans(){
+  const linked=new Set(wifiLinks().map(l=>l.client.id));
+  return devList().filter(d=>{
+    const i=radioIdx(d);
+    return i>=0 && d.type!=='ap' && !linked.has(d.id);
+  });
+}
+
+function addDevice(type,x,y,name){
+  const id=nid(type==='router'?'R':type==='switch'?'SW':type==='cloud'?'NET':type==='modem'?'LTE':type==='carrier'?'OPER':type==='ap'?'AP':type==='repeater'?'REP':'PC');
+  const nIf=type==='switch'?4:(type==='ap'?2:(type==='repeater'?1:((type==='router'||type==='modem'||type==='carrier')?2:1)));
+  const ifaces=[];
+  for(let i=0;i<nIf;i++){
+    let nm='eth'+i;
+    if(type==='switch')nm='p'+(i+1);
+    if(type==='modem')nm=(i===0?'lan0':'wwan0');
+    if(type==='carrier')nm=(i===0?'abonent':'uplink');
+    if(type==='ap')nm=(i===0?'lan':'wlan');
+    if(type==='repeater')nm='wlan';
+    ifaces.push({name:nm,ip:'',prefix:24,up:true,wifi:(type==='ap'&&i===1)||type==='repeater'});
+  }
+  N.devices[id]={id,name:name||id,type,x:x||60+Math.random()*380,y:y||60+Math.random()*220,ifaces,routes:[],
+    nat:{on:type==='modem'||type==='carrier',out:1,fwd:[]},locked:type==='carrier',white:false,
+    dhcp:{on:false,from:'',to:'',leases:[]}};
+  return id;
+}
+function removeDevice(id){
+  N.links=N.links.filter(l=>l.a.d!==id&&l.b.d!==id);
+  delete N.devices[id];
+  if(N.sel===id)N.sel=null;
+}
+function freeIface(id){
+  const d=dev(id);
+  for(let i=0;i<d.ifaces.length;i++){
+    if(!N.links.some(l=>(l.a.d===id&&l.a.i===i)||(l.b.d===id&&l.b.i===i)))return i;
+  }
+  if(d.type==='switch'){d.ifaces.push({name:'p'+(d.ifaces.length+1),ip:'',prefix:24,up:true});return d.ifaces.length-1;}
+  return -1;
+}
+function addLink(aD,aI,bD,bI){
+  if(aI<0||bI<0)return null;
+  const l={id:nid('L'),a:{d:aD,i:aI},b:{d:bD,i:bI}};
+  N.links.push(l);return l;
+}
+
+/* ===================== L2: сегменти ===================== */
+function buildSegments(){
+  const parent={};
+  const k=(d,i)=>d+':'+i;
+  devList().forEach(d=>d.ifaces.forEach((f,i)=>{parent[k(d.id,i)]=k(d.id,i);}));
+  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
+  const uni=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;};
+  devList().forEach(d=>{ if(isBridge(d)){ for(let i=1;i<d.ifaces.length;i++) uni(k(d.id,0),k(d.id,i)); } });
+  N.links.forEach(l=>{
+    const a=dev(l.a.d),b=dev(l.b.d);
+    if(!a||!b)return;
+    const fa=a.ifaces[l.a.i],fb=b.ifaces[l.b.i];
+    if(!fa||!fb||!fa.up||!fb.up)return;
+    uni(k(l.a.d,l.a.i),k(l.b.d,l.b.i));
+  });
+  /* бездротові асоціації працюють так само, як кабель: спільний сегмент */
+  wifiLinks().forEach(w=>uni(k(w.ap.id,w.ai),k(w.client.id,w.di)));
+  return {find,k};
+}
+/* всі L3-інтерфейси в одному широкомовному домені з (devId,ifIdx) */
+function peersOnSegment(devId,ifIdx){
+  const S=buildSegments();
+  const root=S.find(S.k(devId,ifIdx));
+  const out=[];
+  devList().forEach(d=>{
+    if(isBridge(d))return;
+    d.ifaces.forEach((f,i)=>{
+      if(d.id===devId&&i===ifIdx)return;
+      if(!f.up||!ifAny(f))return;
+      if(S.find(S.k(d.id,i))===root)out.push({dev:d,iface:f,idx:i});
+    });
+  });
+  return out;
+}
+
+/* ===================== L3: таблиця маршрутизації ===================== */
+function routeTable(d){
+  const rows=[];
+  d.ifaces.forEach((f,i)=>{
+    if(!f.up)return;
+    ifAddrs(f).forEach(x=>{
+      rows.push({dst:fmtIp(netA(x.a,x.prefix)),prefix:x.prefix,via:null,ifIdx:i,kind:'connected',f:x.a.f});
+    });
+  });
+  (d.routes||[]).forEach(r=>{
+    const a=parseIp(r.dst); if(!a)return;
+    rows.push({dst:r.dst,prefix:+r.prefix,via:r.via,kind:'static',f:a.f});
+  });
+  return rows;
+}
+function lookup(d,dst){
+  let best=null;
+  routeTable(d).forEach(r=>{
+    if(r.f!==dst.f)return;
+    const net=parseIp(r.dst); if(!net)return;
+    if(!sameA(dst,net,r.prefix))return;
+    if(!best || r.prefix>best.prefix || (r.prefix===best.prefix&&r.kind==='connected'&&best.kind!=='connected'))best=r;
+  });
+  return best;
+}
+function resolveNextHop(d,nextIp,route){
+  if(route.kind==='connected'){
+    const peers=peersOnSegment(d.id,route.ifIdx).filter(p=>ifHas(p.iface,nextIp));
+    return peers.length?{peer:peers[0],ifIdx:route.ifIdx}:null;
+  }
+  for(let i=0;i<d.ifaces.length;i++){
+    const f=d.ifaces[i]; if(!f.up)continue;
+    const hit=ifAddrs(f).find(x=>x.a.f===nextIp.f&&sameA(x.a,nextIp,x.prefix));
+    if(!hit)continue;
+    const peers=peersOnSegment(d.id,i).filter(p=>ifHas(p.iface,nextIp));
+    if(peers.length)return {peer:peers[0],ifIdx:i};
+    return {missing:true,ifIdx:i};
+  }
+  return null;
+}
+function ownsIp(d,a){return d.ifaces.some(f=>f.up&&ifHas(f,a));}
+
+/* ===================== рух пакета ===================== */
+/* повертає {ok, path:[devId], trace:[{t,text}], stopAt, sip, dip, natLog} */
+function forward(srcId,sipStr,dipStr,opts){
+  opts=opts||{};
+  let ttl=opts.ttl||16;
+  const trace=[],path=[srcId];
+  let sip=parseIp(sipStr), dip=parseIp(dipStr);
+  const natLog=opts.natLog||[];
+  if(!dip)return {ok:false,trace:[{t:'bad',text:'Адреса призначення некоректна.'}],path,stopAt:srcId,reason:'некоректна адреса'};
+  if(!sip)return {ok:false,trace:[{t:'bad',text:'У відправника немає адреси потрібного сімейства.'}],path,stopAt:srcId,reason:'немає адреси відправника'};
+  if(sip.f!==dip.f)return {ok:false,trace:[{t:'bad',text:'IPv4 і IPv6 — різні мережі. Пакет IPv'+sip.f+' не може йти на адресу IPv'+dip.f+': це не «версія однієї мережі», а два незалежних стеки, що живуть на тих самих кабелях.'}],path,stopAt:srcId,reason:'різні сімейства адрес'};
+  let cur=dev(srcId), origin=true, guard=0, justUnNat=false;
+
+  while(guard++<40){
+    if(!origin && ownsIp(cur,dip)){
+      const back=natLog.find(x=>x.router===cur.id&&eqA(x.newIp,dip));
+      if(back){
+        trace.push({t:'nat',text:cur.name+': NAT згадує підміну — повертає адресу '+fmtIp(back.orig)+' і несе пакет далі всередину.'});
+        dip=back.orig; justUnNat=true;
+      }else if(opts.port&&isRouter(cur)&&cur.nat&&cur.nat.on&&dip.f===4){
+        const fw=(cur.nat.fwd||[]).find(x=>+x.port===+opts.port);
+        if(fw&&parseIp(fw.ip)){
+          trace.push({t:'nat',text:cur.name+': проброс порту '+opts.port+' → '+fw.ip+':'+(fw.toPort||opts.port)+'.'});
+          dip=parseIp(fw.ip); opts.port=+(fw.toPort||opts.port);
+        }else{
+          trace.push({t:'bad',text:cur.name+': на цій адресі порт '+opts.port+' нікуди не веде. За NAT немає кому віддати зʼєднання'+(cur.locked?', а правила оператора вам не належать':'')+' — воно відкидається.'});
+          return {ok:false,trace,path,stopAt:cur.id,reason:cur.locked?'CGNAT оператора: ззовні не достукатись':'порт не проброшено'};
+        }
+      }else{
+        trace.push({t:'ok',text:'Пакет дійшов: '+cur.name+' — це його адреса '+fmtIp(dip)+'.'});
+        return {ok:true,trace,path,stopAt:cur.id,sip,dip,natLog};
+      }
+    }
+    if(origin && ownsIp(cur,dip)){
+      trace.push({t:'ok',text:cur.name+' звертається сам до себе — пакет нікуди не йде.'});
+      return {ok:true,trace,path,stopAt:cur.id,sip,dip,natLog};
+    }
+    if(!origin && !isRouter(cur)){
+      trace.push({t:'bad',text:'Пакет прийшов на '+cur.name+', але адреса призначення не його. Хости чужі пакети не пересилають — тут кінець.'});
+      return {ok:false,trace,path,stopAt:cur.id,reason:'кадр приїхав не туди'};
+    }
+    /* адреси CGNAT не існують для інтернету */
+    if(cur.type==='carrier'&&isCgnat(dip)&&!justUnNat&&!isPrivate4(sip)){
+      trace.push({t:'bad',text:cur.name+': адреса '+fmtIp(dip)+' — з діапазону CGNAT 100.64.0.0/10. В інтернеті такі адреси не маршрутизуються, оператор віддає їх тисячам абонентів. Достукатись ззовні неможливо в принципі.'});
+      return {ok:false,trace,path,stopAt:cur.id,reason:'адреса CGNAT недосяжна з інтернету'};
+    }
+    const r=lookup(cur,dip);
+    if(!r){
+      const why=isRouter(cur)
+        ? 'У таблиці '+cur.name+' немає маршруту IPv'+dip.f+' до '+fmtIp(dip)+' — навіть дефолтного.'
+        : cur.name+' не бачить '+fmtIp(dip)+' у своїй підмережі, а шлюза за замовчуванням для IPv'+dip.f+' у нього немає.';
+      trace.push({t:'bad',text:why});
+      return {ok:false,trace,path,stopAt:cur.id,reason:'немає маршруту'};
+    }
+    const direct=(r.kind==='connected');
+    const nextIp=direct?dip:parseIp(r.via);
+    if(!nextIp||nextIp.f!==dip.f){
+      trace.push({t:'bad',text:cur.name+': у маршруті '+r.dst+'/'+r.prefix+' зазначено шлюз іншого сімейства або некоректну адресу.'});
+      return {ok:false,trace,path,stopAt:cur.id,reason:'битий маршрут'};
+    }
+    const hop=resolveNextHop(cur,nextIp,r);
+    if(!hop){
+      if(direct){
+        const f=cur.ifaces[r.ifIdx];
+        trace.push({t:'bad',text:cur.name+' вважає '+fmtIp(dip)+' своїм сусідом: за префіксом /'+r.prefix+' на '+f.name+' ця адреса потрапляє в його ж підмережу. Тому він не звертається до шлюза, а кричить прямо в кабель — і ніхто не відповідає.'});
+        return {ok:false,trace,path,stopAt:cur.id,reason:'адресат вважається сусідом, але його немає в сегменті'};
+      }
+      trace.push({t:'bad',text:cur.name+': шлюз '+fmtIp(nextIp)+' не належить жодній його підмережі. До шлюза теж треба вміти достукатись.'});
+      return {ok:false,trace,path,stopAt:cur.id,reason:'шлюз поза підмережею'};
+    }
+    /* NAT — тільки для IPv4 */
+    if(isRouter(cur)&&cur.nat&&cur.nat.on&&hop.ifIdx===+cur.nat.out){
+      if(dip.f===6){
+        if(!opts._v6noted){opts._v6noted=true;
+          trace.push({t:'nat',text:cur.name+': пакет IPv6 проходить без підміни адреси. NAT для IPv6 не потрібен — адрес вистачає, відправник лишається собою.'});}
+      }else{
+        const outA=ifAddrs(cur.ifaces[hop.ifIdx]).find(x=>x.a.f===4);
+        if(outA&&!eqA(sip,outA.a)&&isPrivate4(sip)){
+          natLog.push({router:cur.id,orig:sip,newIp:outA.a});
+          trace.push({t:'nat',text:cur.name+': NAT підміняє відправника '+fmtIp(sip)+' → '+fmtIp(outA.a)+'. Зовні приватну адресу все одно ніхто не маршрутизує.'});
+          sip=outA.a;
+        }
+      }
+    }
+    if(!origin){
+      ttl--;
+      if(ttl<=0){
+        trace.push({t:'warn',text:(dip.f===6?'Hop limit':'TTL')+' вичерпано на '+cur.name+'. Пакет викинуто, відправнику летить скарга — саме її ловить traceroute.'});
+        return {ok:false,trace,path,stopAt:cur.id,reason:'TTL',ttlExpired:cur.id};
+      }
+    }
+    const via=direct?('напряму у своїй підмережі'):('через шлюз '+fmtIp(nextIp));
+    trace.push({t:'',text:cur.name+' → '+hop.peer.dev.name+' ('+cur.ifaces[hop.ifIdx].name+' → '+hop.peer.iface.name+'), '+via+'. Маршрут: '+r.dst+'/'+r.prefix+(r.kind==='connected'?' (підключена мережа)':' (статичний)')+'.'});
+    cur=hop.peer.dev; path.push(cur.id); origin=false; justUnNat=false;
+  }
+  trace.push({t:'bad',text:'Пакет ходить по колу — схоже, маршрути замкнули петлю.'});
+  return {ok:false,trace,path,stopAt:cur.id,reason:'петля маршрутизації'};
+}
+
+function primaryIp(d,fam){
+  for(const f of d.ifaces){
+    if(!f.up)continue;
+    const list=ifAddrs(f).filter(x=>!fam||x.a.f===fam).filter(x=>!isLinkLocal6(x.a));
+    if(list.length)return fmtIp(list[0].a);
+  }
+  return null;
+}
+function sourceFor(d,dst){
+  /* адреса того інтерфейсу, через який реально піде пакет */
+  const r=lookup(d,dst);
+  if(r&&r.kind==='connected'&&d.ifaces[r.ifIdx]){
+    const hit=ifAddrs(d.ifaces[r.ifIdx]).find(x=>x.a.f===dst.f);
+    if(hit)return fmtIp(hit.a);
+  }
+  if(r&&r.via){
+    const g=parseIp(r.via);
+    for(const f of d.ifaces){
+      if(!f.up)continue;
+      const hit=ifAddrs(f).find(x=>x.a.f===dst.f&&g&&sameA(x.a,g,x.prefix));
+      if(hit)return fmtIp(hit.a);
+    }
+  }
+  return primaryIp(d,dst.f);
+}
+function ping(srcId,dstStr,opts){
+  opts=opts||{};
+  const src=dev(srcId);
+  const dst=parseIp(dstStr);
+  if(!dst)return {ok:false,forward:{ok:false,trace:[{t:'bad',text:'Адреса призначення некоректна.'}],path:[srcId],stopAt:srcId,reason:'некоректна адреса'},reply:null};
+  const useIp=sourceFor(src,dst);
+  if(!useIp)return {ok:false,forward:{ok:false,trace:[{t:'bad',text:src.name+' не має адреси IPv'+dst.f+' — відправляти нема від кого. Дуал-стек означає дві незалежні адреси, і потрібна саме та, що збігається сімейством.'}],path:[srcId],stopAt:srcId,reason:'немає адреси IPv'+dst.f},reply:null};
+  const natLog=[];
+  const fwd=forward(srcId,useIp,dstStr,{ttl:opts.ttl||16,natLog,port:opts.port});
+  if(!fwd.ok)return {ok:false,forward:fwd,reply:null};
+  const rep=forward(fwd.stopAt,fmtIp(fwd.dip),fmtIp(fwd.sip),{ttl:16,natLog});
+  return {ok:fwd.ok&&rep.ok,forward:fwd,reply:rep};
+}
+function traceroute(srcId,dstStr,maxHops){
+  const out=[];
+  for(let t=1;t<=(maxHops||8);t++){
+    const r=ping(srcId,dstStr,{ttl:t});
+    if(r.forward&&r.forward.ttlExpired){out.push({n:t,name:dev(r.forward.ttlExpired).name,st:'hop'});continue;}
+    if(r.forward&&r.forward.ok){out.push({n:t,name:dev(r.forward.stopAt).name,st:'end'});break;}
+    out.push({n:t,name:'—',st:'lost',why:(r.forward&&r.forward.reason)||'загублено'});
+    break;
+  }
+  return out;
+}
+
+/* ===================== завдання ===================== */
+/* ===================== DHCP ===================== */
+function dhcpServersFor(devId,ifIdx){
+  return peersOnSegment(devId,ifIdx).map(p=>({dev:p.dev,iface:p.iface}))
+    .filter(x=>x.dev.dhcp&&x.dev.dhcp.on&&parseIp(x.iface.ip));
+}
+function addrTaken(str,exceptDevId){
+  const a=parseIp(str); if(!a)return true;
+  if(devList().some(d=>d.id!==exceptDevId&&ownsIp(d,a)))return true;
+  return devList().some(d=>(d.dhcp&&d.dhcp.leases||[]).some(l=>l.ip===str&&l.dev!==exceptDevId));
+}
+function apipa(){return '169.254.'+(1+Math.floor(Math.random()*254))+'.'+(1+Math.floor(Math.random()*254));}
+/* повертає {ok, text} */
+function dhcpRequest(devId,ifIdx){
+  const d=dev(devId), f=d.ifaces[ifIdx];
+  if(!f.up)return {ok:false,text:'Порт вимкнено — запит нікуди не піде.'};
+  const servers=dhcpServersFor(devId,ifIdx);
+  if(!servers.length){
+    f.ip=apipa(); f.prefix=16;
+    d.routes=(d.routes||[]).filter(r=>!(+r.prefix===0&&parseIp(r.dst)&&parseIp(r.dst).f===4));
+    return {ok:false,text:'DHCP не відповів: у цьому сегменті немає сервера, або до нього немає звʼязку. Хост призначив собі адресу сам — '+f.ip+'/16 із діапазону 169.254.0.0/16. Це не мережа, це заглушка.'};
+  }
+  const s=servers[0], sIf=s.iface, srv=s.dev;
+  const from=parseIp(srv.dhcp.from), to=parseIp(srv.dhcp.to);
+  if(!from||!to||from.f!==4||to.f!==4||to.n<from.n){
+    f.ip=apipa(); f.prefix=16;
+    return {ok:false,text:srv.name+' має увімкнений DHCP, але діапазон видачі заданий неправильно. Адреса не видана.'};
+  }
+  /* повторно віддаємо ту саму адресу, якщо оренда вже є */
+  const old=(srv.dhcp.leases||[]).find(l=>l.dev===devId);
+  let give=old?old.ip:null;
+  if(!give){
+    for(let n=from.n;n<=to.n;n++){
+      const cand=fmtIp({f:4,n});
+      if(!addrTaken(cand,devId)){give=cand;break;}
+    }
+  }
+  if(!give){
+    f.ip=apipa(); f.prefix=16;
+    return {ok:false,text:'Пул '+srv.dhcp.from+'–'+srv.dhcp.to+' на '+srv.name+' вичерпано: вільних адрес немає. Хост лишився з 169.254.x — розширте діапазон або звільніть оренди.'};
+  }
+  const p=ifAddrs(sIf).find(x=>x.a.f===4);
+  f.ip=give; f.prefix=p?p.prefix:24; f.dhcp=true;
+  d.routes=(d.routes||[]).filter(r=>{const a=parseIp(r.dst);return !(+r.prefix===0&&a&&a.f===4);});
+  if(p)d.routes.push({dst:'0.0.0.0',prefix:0,via:fmtIp(p.a)});
+  srv.dhcp.leases=(srv.dhcp.leases||[]).filter(l=>l.dev!==devId);
+  srv.dhcp.leases.push({ip:give,dev:devId,name:d.name,month:Date.now()});
+  return {ok:true,text:srv.name+' видав '+give+'/'+f.prefix+', шлюз '+(p?fmtIp(p.a):'—')+'. Оренда записана в таблицю сервера.'};
+}
+function dhcpRelease(devId){
+  devList().forEach(s=>{ if(s.dhcp)s.dhcp.leases=(s.dhcp.leases||[]).filter(l=>l.dev!==devId); });
+  const d=dev(devId);
+  d.ifaces.forEach(f=>{if(f.dhcp){f.ip='';}});
+  d.routes=(d.routes||[]).filter(r=>{const a=parseIp(r.dst);return !(+r.prefix===0&&a&&a.f===4);});
+}
+
+/* ===================== репетитор: розбір схеми без мережі й без ключів ===================== */
+function hostsWithAddr(){return devList().filter(d=>!isBridge(d)&&d.ifaces.some(f=>f.up&&ifAny(f)));}
+function diagnose(){
+  const out=[];
+  const add=(lvl,who,what,why)=>out.push({lvl,who,what,why});
+  /* 1. дублікати адрес */
+  const seen={};
+  devList().forEach(d=>d.ifaces.forEach(f=>{
+    if(!f.up)return;
+    ifAddrs(f).forEach(x=>{const k=fmtIp(x.a);(seen[k]=seen[k]||[]).push(d.name);});
+  }));
+  Object.keys(seen).forEach(k=>{if(seen[k].length>1)add('bad','мережа','Адресу '+k+' одночасно мають: '+seen[k].join(', '),'Дві однакові адреси в одній мережі — це конфлікт: пакети підуть не туди, і працювати буде через раз.');});
+  /* 2. по пристроях */
+  devList().forEach(d=>{
+    if(isBridge(d)){
+      if(radioIdx(d)>=0&&d.type!=='ap'&&!wifiLinks().some(w=>w.client.id===d.id))
+        add('bad',d.name,'Поза зоною покриття','Репітер нічого не ретранслює, поки сам не чує точку доступу. Перетягніть його ближче — пунктирне коло показує радіус.');
+      return;
+    }
+    const addrs=[];d.ifaces.forEach((f,i)=>{if(f.up)ifAddrs(f).forEach(x=>addrs.push({x,i,f}));});
+    if(!addrs.length){add('warn',d.name,'Немає жодної адреси','Пристрій підключений, але мовчить: без адреси він не може ні відправити, ні прийняти.');}
+    addrs.forEach(({x,f})=>{
+      const c=classify(x.a);
+      if(c.n==='link-local (APIPA)')add('bad',d.name,'Адреса '+fmtIp(x.a)+' — APIPA','Хост призначив її собі сам, бо DHCP не відповів. Увімкніть DHCP на роутері в цьому ж сегменті або впишіть адресу руками.');
+      if(isCgnat(x.a))add('warn',d.name,'Адреса '+fmtIp(x.a)+' — CGNAT оператора','Ззовні до цього пристрою достукатись неможливо. Потрібна публічна адреса або вихідний тунель.');
+    });
+    /* радіо */
+    if(radioIdx(d)>=0&&!wifiLinks().some(w=>w.client.id===d.id))
+      add('bad',d.name,'Wi-Fi не підключений','Пристрій не потрапляє в зону жодної точки чи репітера.');
+    /* шлюз */
+    const fams=N.v6?[4,6]:[4];
+    fams.forEach(fam=>{
+      const has=addrs.some(a=>a.x.a.f===fam);
+      if(!has)return;
+      const def=(d.routes||[]).find(r=>{const a=parseIp(r.dst);return +r.prefix===0&&a&&a.f===fam;});
+      const otherNets=devList().some(o=>o!==d&&o.ifaces.some(f=>f.up&&ifAddrs(f).some(x=>
+        x.a.f===fam&&!addrs.some(a=>a.x.a.f===fam&&sameA(a.x.a,x.a,a.x.prefix)))));
+      if(!def&&otherNets&&!isRouter(d))
+        add('bad',d.name,'Немає шлюза за замовчуванням для IPv'+fam,'У мережі є інші підмережі, а маршруту '+(fam===6?'::/0':'0.0.0.0/0')+' немає. Все, що за межами своєї підмережі, для цього пристрою не існує.');
+      if(def){
+        const g=parseIp(def.via);
+        const ok=g&&addrs.some(a=>a.x.a.f===fam&&sameA(a.x.a,g,a.x.prefix));
+        if(!ok)add('bad',d.name,'Шлюз '+def.via+' поза власною підмережею','До шлюза теж треба вміти достукатись напряму. Зараз виходить замкнене коло.');
+      }
+    });
+    /* NAT */
+    if(isRouter(d)&&d.nat&&d.nat.on){
+      const o=d.ifaces[+d.nat.out];
+      if(!o||!ifAddrs(o).some(x=>x.a.f===4))add('warn',d.name,'NAT увімкнено, але на зовнішньому інтерфейсі немає адреси IPv4','Підміняти адресу нема на що.');
+    }
+    /* DHCP */
+    if(canDhcp(d)&&d.dhcp&&d.dhcp.on){
+      const from=parseIp(d.dhcp.from),to=parseIp(d.dhcp.to);
+      if(!from||!to||to.n<from.n)add('bad',d.name,'DHCP увімкнено, але діапазон заданий неправильно','Сервер не зможе видати жодної адреси.');
+      else{
+        const p=ifAddrs(d.ifaces[0]).find(x=>x.a.f===4);
+        if(p&&!(sameA(from,p.a,p.prefix)&&sameA(to,p.a,p.prefix)))
+          add('bad',d.name,'Пул DHCP не збігається з підмережею інтерфейсу','Сервер роздаватиме адреси з чужої мережі — клієнти опиняться в порожнечі.');
+        devList().forEach(o=>{
+          if(o===d)return;
+          o.ifaces.forEach(f=>{if(f.dhcp||!f.up)return;
+            const a=parseIp(f.ip||'');
+            if(a&&a.f===4&&a.n>=from.n&&a.n<=to.n)
+              add('warn',o.name,'Статична адреса '+f.ip+' всередині пулу DHCP','Рано чи пізно сервер видасть її ще комусь — і буде конфлікт. Виведіть її за межі діапазону.');
+          });
+        });
+      }
+    }
+    /* вимкнені порти з кабелем */
+    d.ifaces.forEach((f,i)=>{
+      if(f.up)return;
+      if(N.links.some(l=>(l.a.d===d.id&&l.a.i===i)||(l.b.d===d.id&&l.b.i===i)))
+        add('warn',d.name,'Порт '+f.name+' вимкнено, хоч кабель підключено','Схоже на обрив: мережа цього інтерфейсу зникла з таблиці.');
+    });
+  });
+  /* 3. сусіди в одному сегменті з різними масками */
+  devList().forEach(d=>{
+    if(isBridge(d))return;
+    d.ifaces.forEach((f,i)=>{
+      if(!f.up)return;
+      const mine=ifAddrs(f).find(x=>x.a.f===4); if(!mine)return;
+      peersOnSegment(d.id,i).forEach(p=>{
+        const his=ifAddrs(p.iface).find(x=>x.a.f===4); if(!his)return;
+        if(mine.prefix!==his.prefix)
+          add('warn',d.name+' / '+p.dev.name,'Різні маски в одному сегменті: /'+mine.prefix+' і /'+his.prefix,'Один вважає іншого сусідом, а другий — ні. Зв\u02bcязок вийде однобічним.');
+        else if(!sameA(mine.a,his.a,mine.prefix))
+          add('bad',d.name+' / '+p.dev.name,'В одному кабелі, але в різних підмережах','Комутатор чи точка доступу не зроблять із них сусідів: потрібні адреси однієї підмережі або роутер між ними.');
+      });
+    });
+  });
+  return out;
+}
+function reachability(){
+  const hs=hostsWithAddr(); const rows=[];
+  hs.forEach(a=>hs.forEach(b=>{
+    if(a===b)return;
+    const ip=primaryIp(b,4)||primaryIp(b,6); if(!ip)return;
+    const r=ping(a.id,ip);
+    rows.push({from:a.name,to:b.name,ip,ok:r.ok,
+      why:r.ok?'':((r.forward&&!r.forward.ok)?r.forward.reason:(r.reply?('відповідь: '+r.reply.reason):'—'))});
+  }));
+  return rows;
+}
+
+const TASKS=[
+{id:'s1',title:'Одна підмережа',
+ goal:'PC1 має пінгувати PC2. Пристрої вже в одному комутаторі — питання лише в адресах.',
+ tip:'Дві адреси в одній підмережі відрізняються тільки хостовою частиною. Подивись на другий октет.',
+ setup(){
+   const a=addDevice('host',70,90,'PC1'), b=addDevice('host',70,250,'PC2'), s=addDevice('switch',300,170,'SW1');
+   dev(a).ifaces[0]={name:'eth0',ip:'192.168.1.10',prefix:24,up:true};
+   dev(b).ifaces[0]={name:'eth0',ip:'192.168.2.20',prefix:24,up:true};
+   addLink(a,0,s,freeIface(s)); addLink(b,0,s,freeIface(s));
+ },
+ check(){
+   const a=byName('PC1'),b=byName('PC2'); if(!a||!b)return false;
+   const ip=primaryIp(b); if(!ip)return false;
+   return ping(a.id,ip).ok;
+ }},
+{id:'s2',title:'Дві підмережі через роутер',
+ goal:'PC1 (192.168.1.0/24) має пінгувати PC2 (192.168.2.0/24). Роутер уже налаштований, хости — ні.',
+ tip:'Хосту потрібен маршрут 0.0.0.0/0 через адресу роутера у своїй підмережі.',
+ setup(){
+   const a=addDevice('host',70,90,'PC1'), b=addDevice('host',70,250,'PC2'), r=addDevice('router',330,170,'R1');
+   dev(a).ifaces[0]={name:'eth0',ip:'192.168.1.10',prefix:24,up:true};
+   dev(b).ifaces[0]={name:'eth0',ip:'192.168.2.10',prefix:24,up:true};
+   dev(r).ifaces[0]={name:'eth0',ip:'192.168.1.1',prefix:24,up:true};
+   dev(r).ifaces[1]={name:'eth1',ip:'192.168.2.1',prefix:24,up:true};
+   addLink(a,0,r,0); addLink(b,0,r,1);
+ },
+ check(){const a=byName('PC1'),b=byName('PC2');if(!a||!b)return false;
+   return ping(a.id,primaryIp(b)||'').ok && ping(b.id,primaryIp(a)||'').ok;}},
+{id:'s3',title:'Маска бреше',
+ goal:'PC1 не бачить PC2, хоча шлюз прописано в обох. Знайди й полагодь причину.',
+ tip:'Порівняй маски. Хост із /8 вважає 10.0.2.20 своїм сусідом і навіть не звертається до шлюза — кричить у порожній кабель.',
+ setup(){
+   const a=addDevice('host',70,90,'PC1'), b=addDevice('host',70,250,'PC2'), r=addDevice('router',330,170,'R1');
+   dev(a).ifaces[0]={name:'eth0',ip:'10.0.1.10',prefix:8,up:true};
+   dev(a).routes=[{dst:'0.0.0.0',prefix:0,via:'10.0.1.1'}];
+   dev(b).ifaces[0]={name:'eth0',ip:'10.0.2.20',prefix:24,up:true};
+   dev(b).routes=[{dst:'0.0.0.0',prefix:0,via:'10.0.2.1'}];
+   dev(r).ifaces[0]={name:'eth0',ip:'10.0.1.1',prefix:24,up:true};
+   dev(r).ifaces[1]={name:'eth1',ip:'10.0.2.1',prefix:24,up:true};
+   addLink(a,0,r,0); addLink(b,0,r,1);
+ },
+ check(){const a=byName('PC1'),b=byName('PC2');if(!a||!b)return false;
+   return ping(a.id,primaryIp(b)||'').ok && ping(b.id,primaryIp(a)||'').ok;}},
+{id:'s4',title:'Статичний маршрут і зворотний шлях',
+ goal:'PC1 має пінгувати PC2 через три роутери. Крайні роутери не знають про далекі мережі.',
+ tip:'Спершу додай маршрут туди — і подивись трасування. Запит дійде, а відповідь загубиться: зворотний маршрут теж потрібен.',
+ setup(){
+   const a=addDevice('host',50,80,'PC1'), r1=addDevice('router',200,80,'R1'),
+         r2=addDevice('router',330,180,'R2'), r3=addDevice('router',200,290,'R3'), b=addDevice('host',50,290,'PC2');
+   dev(a).ifaces[0]={name:'eth0',ip:'192.168.10.10',prefix:24,up:true};
+   dev(a).routes=[{dst:'0.0.0.0',prefix:0,via:'192.168.10.1'}];
+   dev(b).ifaces[0]={name:'eth0',ip:'192.168.20.10',prefix:24,up:true};
+   dev(b).routes=[{dst:'0.0.0.0',prefix:0,via:'192.168.20.1'}];
+   dev(r1).ifaces[0]={name:'eth0',ip:'192.168.10.1',prefix:24,up:true};
+   dev(r1).ifaces[1]={name:'eth1',ip:'10.10.10.1',prefix:30,up:true};
+   dev(r2).ifaces[0]={name:'eth0',ip:'10.10.10.2',prefix:30,up:true};
+   dev(r2).ifaces[1]={name:'eth1',ip:'10.10.20.1',prefix:30,up:true};
+   dev(r2).routes=[{dst:'192.168.10.0',prefix:24,via:'10.10.10.1'},{dst:'192.168.20.0',prefix:24,via:'10.10.20.2'}];
+   dev(r3).ifaces[0]={name:'eth0',ip:'10.10.20.2',prefix:30,up:true};
+   dev(r3).ifaces[1]={name:'eth1',ip:'192.168.20.1',prefix:24,up:true};
+   addLink(a,0,r1,0); addLink(r1,1,r2,0); addLink(r2,1,r3,0); addLink(r3,1,b,0);
+ },
+ check(){const a=byName('PC1'),b=byName('PC2');if(!a||!b)return false;
+   return ping(a.id,primaryIp(b)||'').ok && ping(b.id,primaryIp(a)||'').ok;}},
+{id:'s9',title:'Wi-Fi, репітер і DHCP',
+ goal:'Ноутбук у дальній кімнаті не бачить мережу. Треба: 1) поставити репітер так, щоб він дістав і до точки доступу, і до ноутбука; 2) увімкнути на роутері DHCP; 3) отримати на ноутбуці адресу автоматично і пропінгувати 192.168.1.1.',
+ tip:'Пунктирне коло навколо точки й репітера — зона покриття. Перетягни репітер так, щоб він потрапив у коло точки, а ноутбук — у коло репітера. Потім увімкни DHCP на R1 (діапазон підставиться сам) і натисни «отримати адресу» на інтерфейсі ноутбука.',
+ setup(){
+   const r=addDevice('router',110,90,'R1'), ap=addDevice('ap',240,90,'AP1'),
+         rep=addDevice('repeater',430,300,'REP1'), pc=addDevice('host',430,120,'NOTEBOOK');
+   dev(r).ifaces[0]={name:'eth0',ip:'192.168.1.1',prefix:24,up:true};
+   dev(r).ifaces[1]={name:'eth1',ip:'198.51.100.1',prefix:30,up:true};
+   dev(r).dhcp={on:false,from:'',to:'',leases:[]};
+   dev(pc).ifaces[0]={name:'wlan0',ip:'',prefix:24,up:true,wifi:true,dhcp:false};
+   dev(pc).routes=[];
+   addLink(r,0,ap,0);
+ },
+ check(){
+   const pc=byName('NOTEBOOK'), r=byName('R1');
+   if(!pc||!r)return false;
+   const a=parseIp(pc.ifaces[0].ip||'');
+   if(!a||classify(a).n==='link-local (APIPA)')return false;
+   if(!(r.dhcp.leases||[]).some(l=>l.dev===pc.id))return false;
+   return ping(pc.id,'192.168.1.1').ok;
+ }},
+{id:'s8',title:'Що це за адреса',v6:true,
+ goal:'PC1 показує, що мережа підключена, і має адреси обох сімейств — але не працює нічого. Розберись за діапазонами, що це за адреси, і зроби так, щоб пінгувався і 198.51.100.2, і 2001:db8:ff::2.',
+ tip:'169.254.x — хост вигадав адресу сам, бо DHCP не відповів. fe80:: — link-local, вона є завжди і далі кабелю не йде. Обидві означають одне: справжніх адрес немає. Візьми їх із підмереж роутера: 192.168.7.0/24 і 2001:db8:7::/64, і не забудь шлюзи обох сімейств. Кнопка «розібрати адресу» на вкладці «Перевірка» підкаже діапазон будь-якої адреси.',
+ setup(){
+   const pc=addDevice('host',60,180,'PC1'), r=addDevice('router',250,180,'R1'), srv=addDevice('cloud',440,180,'SERVER');
+   dev(pc).ifaces[0]={name:'eth0',ip:'169.254.13.7',prefix:16,ip6:'fe80::5',prefix6:64,up:true};
+   dev(pc).routes=[];
+   dev(r).ifaces[0]={name:'eth0',ip:'192.168.7.1',prefix:24,ip6:'2001:db8:7::1',prefix6:64,up:true};
+   dev(r).ifaces[1]={name:'eth1',ip:'198.51.100.1',prefix:30,ip6:'2001:db8:ff::1',prefix6:64,up:true};
+   dev(r).nat={on:true,out:1,fwd:[]};
+   dev(srv).ifaces=[{name:'eth0',ip:'198.51.100.2',prefix:30,ip6:'2001:db8:ff::2',prefix6:64,up:true}];
+   dev(srv).routes=[{dst:'2001:db8:7::',prefix:64,via:'2001:db8:ff::1'}];
+   addLink(pc,0,r,0); addLink(r,1,srv,0);
+ },
+ check(){
+   const pc=byName('PC1');
+   if(!pc)return false;
+   return ping(pc.id,'198.51.100.2').ok && ping(pc.id,'2001:db8:ff::2').ok;
+ }},
+{id:'s7',title:'IPv6: те саме, але без NAT',v6:true,
+ goal:'PC1 має два стеки одразу. 1) Домогтись, щоб працював ping на 2001:db8:ff::2. 2) Перевірити, що зовнішній сервер сам дістається PC1 на порт 8080 — без жодного пробросу.',
+ tip:'IPv4 і IPv6 живуть у тих самих кабелях, але це дві незалежні мережі: маршрути для кожної свої. PC1 потрібен шлюз ::/0 через 2001:db8:10::1, а серверу — зворотний маршрут 2001:db8:10::/64 через 2001:db8:ff::1.',
+ setup(){
+   const pc=addDevice('host',60,180,'PC1'), r=addDevice('router',250,180,'R1'), srv=addDevice('cloud',440,180,'SERVER');
+   dev(pc).ifaces[0]={name:'eth0',ip:'192.168.5.10',prefix:24,ip6:'2001:db8:10::10',prefix6:64,up:true};
+   dev(pc).routes=[{dst:'0.0.0.0',prefix:0,via:'192.168.5.1'}];
+   dev(r).ifaces[0]={name:'eth0',ip:'192.168.5.1',prefix:24,ip6:'2001:db8:10::1',prefix6:64,up:true};
+   dev(r).ifaces[1]={name:'eth1',ip:'198.51.100.1',prefix:30,ip6:'2001:db8:ff::1',prefix6:64,up:true};
+   dev(r).nat={on:true,out:1,fwd:[]};
+   dev(srv).ifaces=[{name:'eth0',ip:'198.51.100.2',prefix:30,ip6:'2001:db8:ff::2',prefix6:64,up:true}];
+   dev(srv).routes=[{dst:'198.51.100.0',prefix:30,via:'198.51.100.1'}];
+   addLink(pc,0,r,0); addLink(r,1,srv,0);
+ },
+ check(){
+   const pc=byName('PC1'), srv=byName('SERVER');
+   if(!pc||!srv)return false;
+   if(!ping(pc.id,'2001:db8:ff::2').ok)return false;
+   const inb=forward(srv.id,'2001:db8:ff::2','2001:db8:10::10',{port:8080,ttl:16});
+   return inb.ok && dev(inb.stopAt) && dev(inb.stopAt).name==='PC1';
+ }},
+{id:'s6',title:'Мобільний інтернет: чому ззовні не достукатись',
+ goal:'1) З PC1 через мобільний роутер має пінгуватись 8.8.8.8 — це вже працює. 2) Треба, щоб зовнішній сервер дістався PC1 на порт 8080. Спершу спробуй просто пробросити порт на LTE-роутері й перевір, що вийде.',
+ tip:'Оператор віддав вашому модему адресу зі 100.64.0.0/10 — це CGNAT, спільний NAT на тисячі абонентів. Ваш проброс упирається в нього: зовнішня адреса не ваша. У панелі оператора є послуга «біла IP-адреса» — увімкни її, і тоді проброс на модемі запрацює.',
+ setup(){
+   const pc=addDevice('host',48,180,'PC1'), lte=addDevice('modem',185,180,'LTE-роутер'),
+         op=addDevice('carrier',325,180,'ОПЕРАТОР'), net=addDevice('cloud',455,180,'INTERNET');
+   dev(pc).ifaces[0]={name:'eth0',ip:'192.168.8.10',prefix:24,up:true};
+   dev(pc).routes=[{dst:'0.0.0.0',prefix:0,via:'192.168.8.1'}];
+   dev(lte).ifaces[0]={name:'lan0',ip:'192.168.8.1',prefix:24,up:true};
+   dev(lte).ifaces[1]={name:'wwan0',ip:'100.64.7.20',prefix:10,up:true};
+   dev(lte).routes=[{dst:'0.0.0.0',prefix:0,via:'100.64.0.1'}];
+   dev(lte).nat={on:true,out:1,fwd:[]};
+   dev(op).ifaces[0]={name:'abonent',ip:'100.64.0.1',prefix:10,up:true};
+   dev(op).ifaces[1]={name:'uplink',ip:'203.0.113.1',prefix:30,up:true};
+   dev(op).routes=[{dst:'0.0.0.0',prefix:0,via:'203.0.113.2'}];
+   dev(op).nat={on:true,out:1,fwd:[]}; dev(op).locked=true; dev(op).white=false;
+   dev(net).ifaces=[{name:'eth0',ip:'203.0.113.2',prefix:30,up:true},{name:'lo',ip:'8.8.8.8',prefix:32,up:true}];
+   dev(net).routes=[{dst:'0.0.0.0',prefix:0,via:'203.0.113.1'}];
+   addLink(pc,0,lte,0); addLink(lte,1,op,0); addLink(op,1,net,0);
+ },
+ check(){
+   const pc=byName('PC1'), lte=byName('LTE-роутер'), net=byName('INTERNET');
+   if(!pc||!lte||!net)return false;
+   if(!ping(pc.id,'8.8.8.8').ok)return false;
+   const wan=lte.ifaces[1].ip;
+   const inb=forward(net.id,'203.0.113.2',wan,{port:8080,ttl:16});
+   return inb.ok && dev(inb.stopAt) && dev(inb.stopAt).name==='PC1';
+ }},
+{id:'s5',title:'NAT і проброс порту',
+ goal:'1) PC1 з локальної мережі має пінгувати 8.8.8.8. 2) Ззовні звернення на 203.0.113.1 порт 8080 має доходити до PC1.',
+ tip:'Увімкни NAT на R1 і вкажи зовнішній інтерфейс. Далі додай правило пробросу: порт 8080 → 192.168.0.10.',
+ setup(){
+   const a=addDevice('host',60,180,'PC1'), r=addDevice('router',250,180,'R1'), c=addDevice('cloud',430,180,'INTERNET');
+   dev(a).ifaces[0]={name:'eth0',ip:'192.168.0.10',prefix:24,up:true};
+   dev(a).routes=[{dst:'0.0.0.0',prefix:0,via:'192.168.0.1'}];
+   dev(r).ifaces[0]={name:'eth0',ip:'192.168.0.1',prefix:24,up:true};
+   dev(r).ifaces[1]={name:'eth1',ip:'203.0.113.1',prefix:30,up:true};
+   dev(r).routes=[{dst:'0.0.0.0',prefix:0,via:'203.0.113.2'}];
+   dev(c).ifaces=[{name:'eth0',ip:'203.0.113.2',prefix:30,up:true},{name:'lo',ip:'8.8.8.8',prefix:32,up:true}];
+   addLink(a,0,r,0); addLink(r,1,c,0);
+ },
+ check(){
+   const a=byName('PC1'),c=byName('INTERNET');if(!a||!c)return false;
+   const out=ping(a.id,'8.8.8.8').ok;
+   const inb=forward(c.id,'203.0.113.2','203.0.113.1',{port:8080,ttl:16});
+   return out && inb.ok && dev(inb.stopAt) && dev(inb.stopAt).name==='PC1';
+ }}
+];
+function byName(n){return devList().find(d=>d.name===n)||null;}
+function taskById(id){return TASKS.find(t=>t.id===id)||null;}
+function loadTask(id){
+  const t=taskById(id); if(!t)return;
+  if(t.v6)N.v6=true;
+  N.devices={};N.links=[];N.seq=1;N.sel=null;N.mode=null;N.pending=null;
+  N.task=id; t.setup();
+  renderAll();
+}
+
+/* ===================== схема ===================== */
+let lastPath=null, lastFail=null, suppressClick=false;
+const ICON={host:'▢',router:'◈',switch:'▤',cloud:'◍',modem:'▥',carrier:'◎'};
+function wireD(a,b){
+  const mx=(a.x+b.x)/2, my=(a.y+b.y)/2+((a.y===b.y)?18:0);
+  return 'M'+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y;
+}
+function onPathLink(l){
+  return lastPath&&lastPath.some((d,i)=>i<lastPath.length-1&&
+    ((lastPath[i]===l.a.d&&lastPath[i+1]===l.b.d)||(lastPath[i]===l.b.d&&lastPath[i+1]===l.a.d)));
+}
+function renderMap(){
+  const W=520,H=380;
+  let wires='',nodes='';
+  radioNodes().forEach(ap=>{
+    wires+='<circle cx="'+ap.x+'" cy="'+ap.y+'" r="'+RANGE+'" fill="none" stroke="#ffffff" stroke-width="1" opacity=".07" stroke-dasharray="2 6"/>';
+  });
+  wifiLinks().forEach(w=>{
+    const onp=lastPath&&lastPath.some((d,i)=>i<lastPath.length-1&&
+      ((lastPath[i]===w.ap.id&&lastPath[i+1]===w.client.id)||(lastPath[i]===w.client.id&&lastPath[i+1]===w.ap.id)));
+    wires+='<path d="'+wireD(w.ap,w.client)+'" fill="none" stroke="'+(onp?'#ffffff':'#4f4f4f')+'" stroke-width="'+(onp?2.4:1.3)+'" opacity="'+(onp?1:.75)+'" stroke-dasharray="4 4"/>';
+  });
+  N.links.forEach(l=>{
+    const a=dev(l.a.d),b=dev(l.b.d); if(!a||!b)return;
+    const onp=onPathLink(l);
+    const d=wireD(a,b);
+    wires+='<path id="w_'+l.id+'" d="'+d+'" fill="none" stroke="'+(onp?'var(--patch)':'var(--cu)')+'" stroke-width="'+(onp?2.6:1.6)+'" opacity="'+(onp?1:.55)+'"/>';
+    if(onp)wires+='<circle r="4" fill="var(--patch)"><animateMotion id="am_'+l.id+'" dur="1.3s" repeatCount="indefinite" path="'+d+'"/></circle>';
+  });
+  devList().forEach(d=>{
+    const sel=N.sel===d.id, fail=lastFail===d.id;
+    const w=d.type==='switch'?86:76, h=40;
+    const stroke=fail?'var(--bad)':(sel?'var(--cu)':'var(--line2)');
+    const ips=[];
+    d.ifaces.forEach(f=>{if(f.ip)ips.push(f.ip+'/'+f.prefix);if(f.ip6&&N.v6)ips.push(f.ip6+'/'+(f.prefix6===undefined?64:f.prefix6));});
+    const orphan=radioIdx(d)>=0&&d.type!=='ap'&&!wifiLinks().some(w=>w.client.id===d.id);
+    if(orphan)ips.unshift('поза зоною Wi-Fi');
+    nodes+='<g class="devbox" id="g_'+d.id+'" data-dev="'+d.id+'" transform="translate('+d.x+','+d.y+')">'
+      +'<rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" fill="#161616" stroke="'+stroke+'" stroke-width="'+(sel||fail?2:1)+'"'+(orphan?' stroke-dasharray="4 3"':'')+'/>'
+      +'<text x="'+(-w/2+8)+'" y="-4" fill="#ededed" font-size="12.5" font-family="ui-sans-serif,system-ui,sans-serif" font-weight="600">'+esc(ICON[d.type]||'▢')+' '+esc(d.name)+'</text>'
+      +'<text x="'+(-w/2+8)+'" y="11" fill="'+(fail?'var(--bad)':'var(--dim)')+'" font-size="8.5" font-family="ui-monospace,monospace">'+esc(ips[0]||typeName(d.type))+'</text>'
+      +(ips.length>1?'<text x="'+(-w/2+8)+'" y="21" fill="#6e6e6e" font-size="8.5" font-family="ui-monospace,monospace">'+esc(ips[1])+'</text>':'')
+      +(fail?'<text x="'+(w/2-10)+'" y="'+(-h/2+14)+'" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">✕</text>':'')
+      +'</g>';
+  });
+  document.getElementById('svgMount').innerHTML=
+    '<svg class="net" id="netsvg" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+wires+nodes+'</svg>';
+  const tools=document.getElementById('mapTools');
+  if(tools)tools.innerHTML=
+     ibtn('host','хост','data-add="host"')
+    +ibtn('router','роутер','data-add="router"')
+    +ibtn('sw','комутатор','data-add="switch"')
+    +ibtn('ap','точка wi-fi','data-add="ap"')
+    +ibtn('rep','репітер','data-add="repeater"')
+    +ibtn('modem','мобільний','data-add="modem"')
+    +ibtn('v6','IPv6 '+(N.v6?'увімк':'вимк'),'data-v6="1" class="ib'+(N.v6?' on':'')+'"')
+    +ibtn('link','кабель','id="linkBtn" class="ib'+(N.mode==='link'?' on':'')+'"')
+    +ibtn('del','видалити','id="delBtn" class="ib'+(N.mode==='del'?' on':'')+'"')
+    +'<button class="q" data-help="map.build" aria-label="довідка" style="align-self:center">?</button>';
+  const hint=document.getElementById('mapHint');
+  hint.textContent = N.mode==='link' ? (N.pending?'обери другий пристрій':'обери перший пристрій для кабелю')
+    : N.mode==='del' ? 'торкнись пристрою, щоб видалити' : '';
+  const sel=N.sel?dev(N.sel):null;
+  document.getElementById('mapSel').innerHTML = sel
+    ? '<div class="card"><div class="row"><b>'+esc(sel.name)+'</b><span class="pill '+(sel.type==='router'?'r':sel.type==='switch'?'s':'h')+'">'+typeName(sel.type)+'</span>'
+      +q('device.'+sel.type)+'<button class="btn sm" data-goto="dev" style="margin-left:auto">налаштувати →</button></div></div>'
+    : '';
+}
+
+/* ===================== панель пристрою ===================== */
+function renderDev(){
+  const mount=document.getElementById('devMount');
+  const d=N.sel?dev(N.sel):null;
+  if(!d){mount.innerHTML='<div class="card"><div class="hint">Пристрій не обрано. Відкрий «Схему» й торкнись пристрою.</div></div>';return;}
+  let h='<h2 class="sec">'+esc(d.name)+' · '+typeName(d.type)+q('device.'+d.type)+'</h2>';
+  if(N._dhcpMsg){h+='<div class="verdict '+(N._dhcpMsg.ok?'ok':'bad')+'">'+esc(N._dhcpMsg.text)+'</div>';N._dhcpMsg=null;}
+  if(d.locked){
+    h+='<div class="card"><div class="hint" style="color:var(--warn)">Обладнання оператора. Ви ним не керуєте — так само, як не керуєте базовою станцією за вікном. Доступна лише одна річ: замовити послугу.</div>'
+      +'<div class="row" style="margin-top:9px"><button class="btn sm '+(d.white?'on':'')+'" data-devact="white">'
+      +(d.white?'біла IP-адреса: підключена':'замовити білу IP-адресу')+'</button>'+q('whiteip')+'</div>'
+      +'<div class="hint" style="margin-top:7px">'+(d.white
+        ?'Модем отримав публічну адресу напряму. CGNAT його більше не ховає — проброс портів працює.'
+        :'Зараз ви за CGNAT: адреса 100.64.x видана з приватного діапазону оператора, а зовнішня адреса спільна на тисячі абонентів.')+'</div></div>';
+  }else{
+    h+='<div class="card">'
+     +'<div class="row"><label class="f" style="margin:0">назва</label><input type="text" id="devName" value="'+esc(d.name)+'" style="flex:1">'
+     +'<button class="btn sm" data-devact="rename">перейменувати</button></div></div>';
+  }
+
+  h+='<h2 class="sec">Інтерфейси'+q(d.type==='modem'?'mobile':'iface')+'</h2><div class="card">';
+  d.ifaces.forEach((f,i)=>{
+    const linked=N.links.find(l=>(l.a.d===d.id&&l.a.i===i)||(l.b.d===d.id&&l.b.i===i));
+    let peer='не підключено';
+    if(linked){const o=(linked.a.d===d.id&&linked.a.i===i)?linked.b:linked.a;const od=dev(o.d);peer='кабель до '+(od?od.name+' · '+od.ifaces[o.i].name:'?');}
+    h+='<div class="iface"><div class="row" style="justify-content:space-between"><span class="nm">'+esc(f.name)+'</span><span class="hint">'+esc(peer)+q('cable')+'</span></div>';
+    if(d.type!=='switch'&&!d.locked){
+      h+='<div class="row" style="margin-top:7px">'
+        +'<div style="flex:2;min-width:130px"><label class="f">IP-адреса'+q('ip')+'</label><input type="text" data-if="'+i+'" data-k="ip" value="'+esc(f.ip)+'" placeholder="192.168.1.10" style="width:100%"></div>'
+        +'<div style="flex:1;min-width:78px"><label class="f">префікс'+q('prefix')+'</label><input type="number" min="0" max="32" data-if="'+i+'" data-k="prefix" value="'+f.prefix+'" style="width:100%"></div>'
+        +'</div>'
+        +(N.v6?('<div class="row" style="margin-top:6px">'
+        +'<div style="flex:2;min-width:130px"><label class="f">IPv6-адреса'+q('ipv6')+'</label><input type="text" data-if="'+i+'" data-k="ip6" value="'+esc(f.ip6||'')+'" placeholder="2001:db8:10::10" style="width:100%"></div>'
+        +'<div style="flex:1;min-width:78px"><label class="f">/'+q('v6prefix')+'</label><input type="number" min="0" max="128" data-if="'+i+'" data-k="prefix6" value="'+(f.prefix6===undefined?64:f.prefix6)+'" style="width:100%"></div>'
+        +'</div>'):'');
+      const a4=parseIp(f.ip||''), a6=parseIp(f.ip6||'');
+      if(a4)h+='<div class="hint" style="margin-top:5px">'+esc(classify(a4).n)+q('ranges')+' · мережа '+fmtIp(netA(a4,f.prefix))+'/'+f.prefix+' · маска '+intToIp(Number(maskBig(4,f.prefix)))+' · хостів '+(f.prefix>=31?0:(Math.pow(2,32-f.prefix)-2))
+        +(isCgnat(a4)?'<br><span style="color:var(--warn)">адреса з діапазону CGNAT 100.64.0.0/10 — її видав оператор, і ззовні вона недосяжна'+q('cgnat')+'</span>':'')+'</div>';
+      else if(f.ip)h+='<div class="hint" style="color:var(--bad);margin-top:5px">IPv4-адреса некоректна</div>';
+      if(a6&&N.v6){const p6=(f.prefix6===undefined?64:+f.prefix6);
+        h+='<div class="hint" style="margin-top:4px;color:var(--paper2)">'+esc(classify(a6).n)+' · мережа '+fmtIp(netA(a6,p6))+'/'+p6
+          +' · без NAT'+q('ipv6')+'</div>';}
+      else if(f.ip6&&N.v6)h+='<div class="hint" style="color:var(--bad);margin-top:4px">IPv6-адреса некоректна</div>';
+      h+=(f.dhcp?'<div class="hint" style="margin-top:5px;color:var(--paper2)">адресу видав DHCP</div>':'')
+        +'<div class="row" style="margin-top:6px"><button class="btn sm" data-ifact="'+i+':toggle">'+(f.up?'вимкнути порт':'увімкнути порт')+'</button>'+q('port.updown')
+        +(d.type==='host'?'<button class="btn sm '+(f.wifi?'on':'')+'" data-ifact="'+i+':wifi">'+(f.wifi?'Wi-Fi':'кабель')+'</button>'+q('wifi'):'')
+        +(d.type==='host'?'<button class="btn sm" data-ifact="'+i+':dhcp">отримати адресу (DHCP)</button>'+q('dhcp'):'')
+        +(d.type==='host'&&f.dhcp?'<button class="btn sm" data-ifact="'+i+':release">звільнити</button>':'')
+        +(linked?'<button class="btn sm" data-ifact="'+i+':unlink">відʼєднати кабель</button>':'')+'</div>';
+    }else if(d.locked){
+      const ipx=ipToInt(f.ip);
+      h+='<div class="hint" style="margin-top:6px">'+esc(f.ip||'—')+'/'+f.prefix
+        +(ipx!==null&&isCgnat(ipx)?' · <span style="color:var(--warn)">діапазон CGNAT</span>':'')+'</div>';
+    }else{
+      h+='<div class="row" style="margin-top:6px">'+(linked?'<button class="btn sm" data-ifact="'+i+':unlink">відʼєднати кабель</button>':'<span class="hint">вільний порт</span>')+'</div>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+
+  if(d.type!=='switch'&&!d.locked){
+    h+='<h2 class="sec">Таблиця маршрутизації'+q('routes')+'</h2><div class="card"><table class="tbl"><tr><th>призначення</th><th>шлюз</th><th>джерело</th><th></th></tr>';
+    routeTable(d).filter(r=>N.v6||r.f===4).forEach(r=>{
+      h+='<tr><td>'+esc(r.dst)+'/'+r.prefix+' <span class="pill" style="'+(r.f===6?'color:var(--patch);border-color:var(--patch)':'')+'">v'+r.f+'</span></td><td>'+(r.via?esc(r.via):'<span class="hint">напряму</span>')+'</td>'
+        +'<td><span class="pill">'+(r.kind==='connected'?'інтерфейс':'статичний')+'</span></td><td>'
+        +(r.kind==='static'?'<button class="btn sm" data-rtdel="'+esc(r.dst)+'/'+r.prefix+'">×</button>':'')+'</td></tr>';
+    });
+    h+='</table><div class="row" style="margin-top:9px">'
+      +'<div style="flex:2;min-width:118px"><label class="f">мережа</label><input type="text" id="rtDst" placeholder="0.0.0.0 або ::" style="width:100%"></div>'
+      +'<div style="flex:1;min-width:66px"><label class="f">/</label><input type="number" id="rtPfx" value="0" min="0" max="32" style="width:100%"></div>'
+      +'<div style="flex:2;min-width:118px"><label class="f">через шлюз'+q('gateway')+'</label><input type="text" id="rtVia" placeholder="192.168.1.1" style="width:100%"></div></div>'
+      +'<div class="row" style="margin-top:7px"><button class="btn sm" data-devact="addroute">додати маршрут</button>'+q('route.static')
+      +'<button class="btn sm" data-devact="adddefault">швидко: шлюз за замовчуванням</button></div>'
+      +'<div class="hint" style="margin-top:7px">Маршрут <code>0.0.0.0/0</code> — це і є «шлюз за замовчуванням». Для IPv6 те саме записується як <code>::/0</code>: сімейства не перетинаються, маршрути потрібні обом.</div></div>';
+  }
+
+  if(canDhcp(d)){
+    const L=(d.dhcp.leases||[]);
+    h+='<h2 class="sec">DHCP-сервер'+q('dhcp')+'</h2><div class="card">'
+     +'<div class="row"><button class="btn sm '+(d.dhcp.on?'on':'')+'" data-devact="dhcptoggle">'+(d.dhcp.on?'DHCP увімкнено':'DHCP вимкнено')+'</button></div>'
+     +'<div class="row" style="margin-top:8px">'
+     +'<div style="flex:1;min-width:120px"><label class="f">видавати з</label><input type="text" id="dhFrom" value="'+esc(d.dhcp.from||'')+'" placeholder="192.168.1.100" style="width:100%"></div>'
+     +'<div style="flex:1;min-width:120px"><label class="f">до</label><input type="text" id="dhTo" value="'+esc(d.dhcp.to||'')+'" placeholder="192.168.1.150" style="width:100%"></div></div>'
+     +'<div class="row" style="margin-top:7px"><button class="btn sm" data-devact="dhcprange">зберегти діапазон</button></div>'
+     +'<table class="tbl" style="margin-top:10px"><tr><th>видана адреса</th><th>кому</th><th></th></tr>'
+     +(L.length?L.map((l,i)=>'<tr><td>'+esc(l.ip)+'</td><td>'+esc((dev(l.dev)||{name:l.name}).name)+'</td><td><button class="btn sm" data-leasedel="'+i+'">×</button></td></tr>').join('')
+        :'<tr><td colspan="3"><span class="hint">оренд поки немає</span></td></tr>')
+     +'</table>'
+     +'<div class="hint" style="margin-top:8px">Сервер видає адреси лише тим, хто з ним в одному сегменті. Шлюз і маску клієнт отримує з інтерфейсу сервера.</div></div>';
+  }
+  if(isBridge(d)&&d.type!=='switch'){
+    const conn=wifiLinks().filter(w=>w.ap.id===d.id);
+    const up=wifiLinks().find(w=>w.client.id===d.id);
+    h+='<h2 class="sec">Радіо'+q(d.type==='repeater'?'repeater':'wifi')+'</h2><div class="card">'
+     +'<div class="hint">Радіус покриття — '+RANGE+' одиниць схеми. Перетягни пристрої, щоб змінити відстань.</div>'
+     +(d.type==='repeater'?('<div class="hint" style="margin-top:7px">'+(up
+        ?'Підключений до '+esc(up.ap.name)+', відстань '+up.dist+'. Це <b>та сама мережа</b>, не нова: підмережа, шлюз і DHCP лишаються від роутера.'
+        :'<span style="color:var(--paper)">✕ Поза зоною: жодна точка доступу не дістає. Репітер ретранслює лише те, що сам чує.</span>')+'</div>'):'')
+     +'<div class="hint" style="margin-top:7px">Підключено зараз: '+(conn.length?conn.map(w=>esc(w.client.name)+' ('+w.dist+')').join(', '):'нікого')+'</div>'
+     +(d.type==='repeater'?'<div class="hint" style="margin-top:7px">Репітер приймає й одразу переповідає той самий сигнал, тому реальна швидкість у клієнтів за ним приблизно вдвічі менша.</div>':'')
+     +'</div>';
+  }
+  if(isRouter(d)&&!d.locked){
+    h+='<h2 class="sec">NAT і проброс портів'+q('nat')+'</h2><div class="card">'
+      +'<div class="row"><button class="btn sm '+(d.nat.on?'on':'')+'" data-devact="nat">'+(d.nat.on?'NAT увімкнено':'NAT вимкнено')+'</button>'
+      +'<label class="f" style="margin:0 0 0 6px">зовнішній інтерфейс'+q('nat.out')+'</label>'
+      +'<select id="natOut">'+d.ifaces.map((f,i)=>'<option value="'+i+'"'+(+d.nat.out===i?' selected':'')+'>'+esc(f.name)+(f.ip?' · '+esc(f.ip):'')+'</option>').join('')+'</select></div>'
+      +'<div class="hint" style="margin-top:7px">Адреси відправника з приватних діапазонів підміняються на адресу цього інтерфейсу.</div>';
+    h+='<table class="tbl" style="margin-top:9px"><tr><th>зовн. порт</th><th>внутрішній хост</th><th>порт</th><th></th></tr>';
+    (d.nat.fwd||[]).forEach((f,i)=>{h+='<tr><td>'+esc(f.port)+'</td><td>'+esc(f.ip)+'</td><td>'+esc(f.toPort||f.port)+'</td><td><button class="btn sm" data-fwddel="'+i+'">×</button></td></tr>';});
+    h+='</table><div class="row" style="margin-top:8px">'
+      +'<div style="flex:1;min-width:74px"><label class="f">порт</label><input type="number" id="fwPort" value="8080" style="width:100%"></div>'
+      +'<div style="flex:2;min-width:120px"><label class="f">на хост</label><input type="text" id="fwIp" placeholder="192.168.0.10" style="width:100%"></div>'
+      +'<div style="flex:1;min-width:74px"><label class="f">на порт</label><input type="number" id="fwTo" value="8080" style="width:100%"></div></div>'
+      +'<div class="row" style="margin-top:7px"><button class="btn sm" data-devact="addfwd">додати проброс</button>'+q('fwd')+'</div></div>';
+  }
+  if(!d.locked)h+='<div class="card"><button class="btn sm" data-devact="del">видалити пристрій</button></div>';
+  mount.innerHTML=h;
+}
+
+/* ===================== перевірка ===================== */
+function renderRunSelect(){
+  const sel=document.getElementById('runSrc');
+  const cur=sel.value;
+  sel.innerHTML=devList().filter(d=>d.type!=='switch').map(d=>'<option value="'+d.id+'">'+esc(d.name)+(primaryIp(d)?' · '+esc(primaryIp(d)):'')+'</option>').join('');
+  if(cur&&dev(cur))sel.value=cur;
+}
+function traceHTML(tr){
+  return '<div class="trace">'+tr.map((l,i)=>'<div class="l"><span class="n">'+(i+1)+'</span><span class="'+(l.t||'')+'">'+esc(l.text)+'</span></div>').join('')+'</div>';
+}
+function showPing(srcId,dst,port){
+  const r=ping(srcId,dst,{port:port});
+  lastPath=r.forward?r.forward.path:null;
+  lastFail=(r.forward&&!r.forward.ok)?r.forward.stopAt:((r.reply&&!r.reply.ok)?r.reply.stopAt:null);
+  let h='';
+  if(!r.forward){h='<div class="verdict bad">Немає адреси у відправника.</div>';}
+  else if(!r.forward.ok){
+    h='<div class="verdict bad">Запит не дійшов. Причина: '+esc(r.forward.reason)+'. Дивись, на якому кроці обірвалось.</div>'+traceHTML(r.forward.trace);
+  }else if(r.reply&&!r.reply.ok){
+    h='<div class="verdict bad">Запит дійшов, а відповідь загубилась ('+esc(r.reply.reason)+'). Це не «половина звʼязку» — для вас це просто мовчання. Зворотний шлях треба налаштувати окремо.</div>'
+     +'<h2 class="sec">Туди</h2>'+traceHTML(r.forward.trace)
+     +'<h2 class="sec">Назад'+q('check')+'</h2>'+traceHTML(r.reply.trace);
+  }else{
+    h='<div class="verdict ok">Відповідь отримано. Шлях: '+esc(r.forward.path.map(id=>dev(id).name).join(' → '))+'.</div>'
+     +'<h2 class="sec">Туди</h2>'+traceHTML(r.forward.trace)
+     +'<h2 class="sec">Назад</h2>'+traceHTML(r.reply.trace);
+  }
+  document.getElementById('runOut').innerHTML=h;
+  renderMap();
+}
+function showTrace(srcId,dst){
+  const hops=traceroute(srcId,dst,8);
+  let h='<div class="verdict">traceroute до '+esc(dst)+'</div><div class="trace">';
+  hops.forEach(x=>{
+    h+='<div class="l"><span class="n">'+x.n+'</span><span class="'+(x.st==='end'?'ok':x.st==='lost'?'bad':'')+'">'
+      +(x.st==='lost'?('пакет загубився: '+esc(x.why||'')):esc(x.name)+(x.st==='end'?' — призначення':''))+'</span></div>';
+  });
+  h+='</div><div class="hint" style="margin-top:8px">Кожен рядок — це роутер, у якого TTL дійшов до нуля. Останній рядок — той, хто відповів як адресат.</div>';
+  document.getElementById('runOut').innerHTML=h;
+  const r=ping(srcId,dst); lastPath=r.forward?r.forward.path:null; lastFail=null; renderMap();
+}
+function showPort(srcId,dst,port){
+  const src=dev(srcId), sip=primaryIp(src);
+  if(!sip){document.getElementById('runOut').innerHTML='<div class="verdict bad">У відправника немає адреси.</div>';return;}
+  const r=forward(srcId,sip,dst,{port:+port,ttl:16});
+  lastPath=r.path; lastFail=r.ok?null:r.stopAt;
+  const where=r.ok?dev(r.stopAt).name:null;
+  document.getElementById('runOut').innerHTML=
+    (r.ok?'<div class="verdict ok">Зʼєднання на порт '+esc(port)+' дійшло до '+esc(where)+'.</div>'
+        :'<div class="verdict bad">Зʼєднання не дійшло: '+esc(r.reason)+'.</div>')+traceHTML(r.trace);
+  renderMap();
+}
+
+/* ===================== завдання ===================== */
+function showAnalyze(str){
+  const a=parseIp(str);
+  const out=document.getElementById('runOut');
+  if(!a){out.innerHTML='<div class="verdict bad">«'+esc(str)+'» — не адреса. IPv4 — чотири числа через крапку, IPv6 — групи через двокрапку.</div>';return;}
+  const c=classify(a);
+  const owner=devList().find(d=>ownsIp(d,a));
+  const bits=bitsOf(a.f);
+  let h='<div class="verdict '+(c.ok?'ok':'')+'">'+esc(fmtIp(a))+' — <b>'+esc(c.n)+'</b> · IPv'+a.f+'</div>'
+   +'<div class="card"><table class="tbl">'
+   +'<tr><th>діапазон</th><td>'+esc(c.r)+'</td></tr>'
+   +'<tr><th>де діє</th><td>'+esc(c.s)+'</td></tr>'
+   +'<tr><th>в інтернеті</th><td>'+(c.ok?'<span style="color:var(--ok)">маршрутизується</span>':'<span style="color:var(--warn)">не маршрутизується</span>')+'</td></tr>'
+   +'<tr><th>розмір адреси</th><td>'+bits+' біт</td></tr>'
+   +'<tr><th>у цій схемі</th><td>'+(owner?esc(owner.name):'<span class="hint">ніхто не має цієї адреси</span>')+'</td></tr>'
+   +'</table><div class="hint" style="margin-top:9px">'+esc(c.d)+'</div></div>';
+  if(a.f===4){
+    const p=[8,16,24,26,30];
+    h+='<h2 class="sec">Ця ж адреса з різними масками</h2><div class="card"><table class="tbl"><tr><th>префікс</th><th>мережа</th><th>хостів</th></tr>'
+     +p.map(x=>'<tr><td>/'+x+'</td><td>'+esc(fmtIp(netA(a,x)))+'</td><td>'+(x>=31?0:Math.pow(2,32-x)-2)+'</td></tr>').join('')
+     +'</table><div class="hint" style="margin-top:8px">Одна й та сама адреса при різних масках опиняється в різних мережах — саме через це ламається звʼязок у завданні про маску.</div></div>';
+  }else{
+    const p=[48,56,64];
+    h+='<h2 class="sec">Префікси, які видають насправді</h2><div class="card"><table class="tbl"><tr><th>префікс</th><th>мережа</th><th>підмереж /64</th></tr>'
+     +p.map(x=>'<tr><td>/'+x+'</td><td>'+esc(fmtIp(netA(a,x)))+'</td><td>'+(x===64?'1':(Math.pow(2,64-x)).toLocaleString('en-US'))+'</td></tr>').join('')
+     +'</table><div class="hint" style="margin-top:8px">Абоненту зазвичай дають /56 або /48 — це тисячі підмереж по /64. Порівняйте з IPv4, де одна публічна адреса коштує грошей.</div></div>';
+  }
+  document.getElementById('runOut').innerHTML=h;
+}
+const ASKS=[
+ ['Що таке маска й навіщо вона','prefix'],
+ ['Навіщо шлюз за замовчуванням','gateway'],
+ ['Чому не працює, хоча кабель є','ranges'],
+ ['Що таке NAT','nat'],
+ ['Чому ззовні до мене не достукатись','cgnat'],
+ ['Хто роздає адреси (DHCP)','dhcp'],
+ ['Точка доступу і репітер','repeater'],
+ ['Навіщо IPv6','ipv6']
+];
+function tutorContext(){
+  const L=[];
+  L.push('Пристроїв: '+devList().length+', кабелів: '+N.links.length+(N.v6?', режим IPv6 увімкнено':''));
+  devList().forEach(d=>{
+    const a=d.ifaces.filter(f=>f.up&&ifAny(f)).map(f=>f.name+' '+(f.ip?f.ip+'/'+f.prefix:'')+(f.ip6&&N.v6?' '+f.ip6+'/'+(f.prefix6===undefined?64:f.prefix6):'')).join(', ');
+    L.push(typeName(d.type)+' '+d.name+': '+(a||'без адрес')
+      +((d.routes||[]).length?' | маршрути: '+d.routes.map(r=>r.dst+'/'+r.prefix+'→'+r.via).join('; '):'')
+      +(d.nat&&d.nat.on?' | NAT увімкнено':'')
+      +(d.dhcp&&d.dhcp.on?' | DHCP '+d.dhcp.from+'–'+d.dhcp.to:''));
+  });
+  return L.join('\n');
+}
+async function askModel(question){
+  const key=(()=>{try{return (localStorage.getItem('patch_key')||'').trim();}catch(e){return '';}})();
+  const headers={'Content-Type':'application/json'};
+  if(key){headers['x-api-key']=key;headers['anthropic-version']='2023-06-01';headers['anthropic-dangerous-direct-browser-access']='true';}
+  const sys='Ти спокійний репетитор із комп\u02bcютерних мереж. Відповідай стисло (3–6 речень), простою мовою, українською або російською — тією, якою запитали. Спирайся на подану схему користувача, називай конкретні пристрої й адреси. Не вигадуй того, чого немає у схемі.';
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,system:sys,
+      messages:[{role:'user',content:'Схема користувача:\n'+tutorContext()+'\n\nПитання: '+question}]})});
+  if(!res.ok)throw new Error('api '+res.status);
+  const data=await res.json();
+  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+}
+function renderTutor(){
+  const m=document.getElementById('tutorMount'); if(!m)return;
+  const iss=diagnose();
+  const bad=iss.filter(x=>x.lvl==='bad'), warn=iss.filter(x=>x.lvl==='warn');
+  const t=N.task?taskById(N.task):null;
+  const solved=t?(()=>{try{return !!t.check();}catch(e){return false;}})():false;
+  let h='';
+  h+='<h2 class="sec">Розбір вашої схеми</h2><div class="card">'
+   +(iss.length===0
+      ? '<div class="verdict ok">Помилок не видно. Усі адреси, маски й шлюзи узгоджені між собою.</div>'
+      : '<div class="verdict '+(bad.length?'bad':'')+'">Знайдено: '+bad.length+' поломок, '+warn.length+' зауважень.</div>')
+   +iss.map(x=>'<div style="border-left:2px '+(x.lvl==='bad'?'solid':'dashed')+' var(--paper);padding:7px 10px;margin-bottom:7px">'
+      +'<div style="font-size:12.5px"><b>'+esc(x.who)+'</b> — '+esc(x.what)+'</div>'
+      +'<div class="hint" style="margin-top:3px">'+esc(x.why)+'</div></div>').join('')
+   +'<div class="ibrow" style="margin-top:6px">'+ibtn('check','перевірити ще раз','data-tutor="rescan"')+'</div></div>';
+
+  if(t){
+    h+='<h2 class="sec">Поточне завдання</h2><div class="card">'
+     +'<div style="font-family:var(--disp);font-weight:600;font-size:15px">'+esc(t.title)+'</div>'
+     +'<div class="hint" style="margin:5px 0 8px">'+esc(t.goal)+'</div>'
+     +'<div class="verdict '+(solved?'ok':'bad')+'">'+(solved?'Умову виконано.':'Умову ще не виконано.')+'</div>'
+     +(N._tutorTip?'<div class="hint" style="color:var(--paper2)">'+esc(t.tip)+'</div>':'')
+     +'<div class="ibrow">'+ibtn('task','підказка','data-tutor="tip"')+'</div></div>';
+  }
+
+  const R=reachability();
+  if(R.length){
+    h+='<h2 class="sec">Хто кого бачить</h2><div class="card"><table class="tbl"><tr><th>звідки</th><th>куди</th><th></th></tr>'
+     +R.map(r=>'<tr><td>'+esc(r.from)+'</td><td>'+esc(r.to)+' <span class="hint">'+esc(r.ip)+'</span></td>'
+       +'<td>'+(r.ok?'✓':'✕ <span class="hint">'+esc(r.why)+'</span>')+'</td></tr>').join('')
+     +'</table></div>';
+  }
+
+  h+='<h2 class="sec">Спитати</h2><div class="card">'
+   +'<div class="ibrow" style="gap:6px;margin-bottom:8px">'
+   +ASKS.map(([lab,key])=>'<button class="btn sm" data-ask="'+key+'">'+esc(lab)+'</button>').join('')
+   +'</div>'
+   +'<div class="row"><input type="text" id="tutorQ" placeholder="своє питання про цю схему" style="flex:1">'
+   +'<button class="btn sm" data-tutor="send">спитати</button></div>'
+   +'<div id="tutorOut" style="margin-top:9px">'+(N._tutorAns||'')+'</div></div>';
+
+  const hasKey=(()=>{try{return !!(localStorage.getItem('patch_key')||'').trim();}catch(e){return false;}})();
+  h+='<h2 class="sec">Жива модель (необовʼязково)</h2><div class="card">'
+   +'<div class="hint">Розбір вище працює завжди — без інтернету, без ключів, без надсилання ваших даних кудись. '
+   +'Якщо хочете вільні відповіді на будь-які питання, можна підключити модель своїм ключем API. '
+   +'<b>Ключ зберігається лише у вашому браузері</b>, але будь-хто з доступом до цього пристрою зможе його побачити — не використовуйте чужий чи робочий ключ.</div>'
+   +'<div class="row" style="margin-top:8px"><input type="password" id="tutorKey" placeholder="'+(hasKey?'ключ збережено':'sk-ant-...')+'" style="flex:1">'
+   +'<button class="btn sm" data-tutor="savekey">зберегти</button>'
+   +(hasKey?'<button class="btn sm" data-tutor="delkey">видалити</button>':'')+'</div></div>';
+  m.innerHTML=h;
+}
+function tutorAnswer(html){N._tutorAns=html;const o=document.getElementById('tutorOut');if(o)o.innerHTML=html;}
+function renderTasks(){
+  const mount=document.getElementById('taskMount');
+  let h='<div class="card"><div class="hint">'+q('task')+' Кожне завдання ставить схему заново. Перевірка запускає справжні пінги по вашій конфігурації — обманути її не вийде.</div></div>';
+  TASKS.forEach((t,i)=>{
+    const cur=N.task===t.id, done=N.solved&&N.solved[t.id];
+    h+='<div class="taskcard '+(cur?'on':'')+'">'
+      +'<div class="row"><span class="tt">'+(i+1)+'. '+esc(t.title)+'</span>'+(done?'<span class="done" style="margin-left:auto">✓ виконано</span>':'')+'</div>'
+      +'<div class="hint" style="margin:5px 0 8px">'+esc(t.goal)+'</div>'
+      +(t.v6&&!N.v6?'<div class="hint" style="margin-bottom:6px;color:var(--paper2)">потребує IPv6 — відкриття увімкне його автоматично</div>':'')
+      +'<div class="row"><button class="btn sm" data-task="'+t.id+'">'+(cur?'почати заново':'відкрити')+'</button>'
+      +(cur?'<button class="btn sm primary" data-taskcheck="'+t.id+'">перевірити</button><button class="btn sm" data-tasktip="'+t.id+'">підказка</button>':'')+'</div>'
+      +(cur&&N._tip===t.id?'<div class="hint" style="margin-top:8px;color:var(--warn)">'+esc(t.tip)+'</div>':'')
+      +(cur&&N._res?'<div class="verdict '+(N._res.ok?'ok':'bad')+'" style="margin-top:9px">'+esc(N._res.text)+'</div>':'')
+      +'</div>';
+  });
+  h+='<div class="card"><div class="ibrow">'
+    +ibtn('map','чистий аркуш','data-devact="freemode"')
+    +ibtn('trash','стерти збережене','data-devact="wipe"')
+    +'</div><div class="hint" style="margin-top:6px">Схема зберігається на пристрої автоматично після кожної зміни. «Стерти збережене» прибирає її повністю й повертає перше завдання.</div>'
+    +'<div class="hint" id="saveStatus" style="margin-top:5px"></div></div>';
+  mount.innerHTML=h;
+  document.getElementById('taskChip').textContent=N.task?('завдання: '+taskById(N.task).title):'вільний режим';
+}
+
+/* ===================== рендер + події ===================== */
+function renderAll(){renderMap();renderDev();renderRunSelect();renderTutor();renderTasks();save();}
+const TABS=[['map','map','схема'],['dev','dev','пристрій'],['check','run','перевірка'],['ai','tutor','репетитор'],['task','task','завдання'],['ref','ref','довідка']];
+function renderNav(cur){
+  document.getElementById('nav').innerHTML=TABS.map(([ic,id,lab])=>
+    '<button class="ib'+(id===cur?' on':'')+'" data-tab="'+id+'">'+icon(ic)+'<span>'+lab+'</span></button>').join('');
+}
+function tab(name){
+  renderNav(name);
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='tab-'+name));
+}
+function readNum(id,dflt){const e=document.getElementById(id);const v=e?+e.value:NaN;return isNaN(v)?dflt:v;}
+function readStr(id){const e=document.getElementById(id);return e?e.value.trim():'';}
+
+function boot(){
+  document.getElementById('nav').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-tab]'); if(!b)return; tab(b.dataset.tab);
+    if(b.dataset.tab==='run')renderRunSelect();
+    if(b.dataset.tab==='tutor')renderTutor();
+  });
+
+  document.body.addEventListener('click',e=>{
+    const qb=e.target.closest('[data-help]'); if(qb){openHelp(qb.dataset.help);return;}
+    if(e.target.closest('[data-closehelp]')||e.target.id==='scrim'){closeHelp();return;}
+    if(suppressClick){suppressClick=false;return;}
+    const add=e.target.closest('[data-add]');
+    if(add){const id=addDevice(add.dataset.add,80+Math.random()*340,70+Math.random()*230);N.sel=id;N.mode=null;renderAll();return;}
+    if(e.target.closest('#linkBtn')){N.mode=N.mode==='link'?null:'link';N.pending=null;renderMap();return;}
+    if(e.target.closest('#delBtn')){N.mode=N.mode==='del'?null:'del';N.pending=null;renderMap();return;}
+
+    const v6b=e.target.closest('[data-v6]');
+    if(v6b){N.v6=!N.v6;renderAll();return;}
+    const g=e.target.closest('[data-dev]');
+    if(g){
+      const id=g.dataset.dev;
+      if(N.mode==='del'){removeDevice(id);N.mode=null;renderAll();return;}
+      if(N.mode==='link'){
+        if(!N.pending){N.pending=id;renderMap();return;}
+        if(N.pending===id){N.pending=null;renderMap();return;}
+        const a=freeIface(N.pending), b=freeIface(id);
+        if(a<0||b<0){document.getElementById('mapHint').textContent='немає вільного порту';N.pending=null;return;}
+        addLink(N.pending,a,id,b); N.pending=null;N.mode=null;renderAll();return;
+      }
+      N.sel=id; renderMap(); renderDev(); save(); return;
+    }
+    if(e.target.closest('[data-goto="dev"]')){tab('dev');renderDev();return;}
+
+    const ia=e.target.closest('[data-ifact]');
+    if(ia){
+      const [i,act]=ia.dataset.ifact.split(':'); const d=dev(N.sel);
+      if(act==='toggle')d.ifaces[+i].up=!d.ifaces[+i].up;
+      if(act==='unlink')N.links=N.links.filter(l=>!((l.a.d===d.id&&l.a.i===+i)||(l.b.d===d.id&&l.b.i===+i)));
+      if(act==='wifi'){d.ifaces[+i].wifi=!d.ifaces[+i].wifi;}
+      if(act==='dhcp'){const res=dhcpRequest(d.id,+i);N._dhcpMsg=res;}
+      if(act==='release'){dhcpRelease(d.id);N._dhcpMsg={ok:true,text:'Оренду звільнено, адресу знято.'};}
+      renderAll();return;
+    }
+    const rd=e.target.closest('[data-rtdel]');
+    if(rd){const [dst,p]=rd.dataset.rtdel.split('/');const d=dev(N.sel);
+      d.routes=d.routes.filter(r=>!(r.dst===dst&&+r.prefix===+p));renderAll();return;}
+    const ld=e.target.closest('[data-leasedel]');
+    if(ld){const d=dev(N.sel);const l=(d.dhcp.leases||[])[+ld.dataset.leasedel];
+      if(l){const c=dev(l.dev);if(c)c.ifaces.forEach(f=>{if(f.ip===l.ip)f.ip='';});d.dhcp.leases.splice(+ld.dataset.leasedel,1);}
+      renderAll();return;}
+    const fd=e.target.closest('[data-fwddel]');
+    if(fd){const d=dev(N.sel);d.nat.fwd.splice(+fd.dataset.fwddel,1);renderAll();return;}
+
+    const da=e.target.closest('[data-devact]');
+    if(da){
+      const act=da.dataset.devact, d=N.sel?dev(N.sel):null;
+      if(act==='wipe'){wipe();return;}
+      if(act==='freemode'){N.devices={};N.links=[];N.task=null;N.sel=null;N._res=null;renderAll();tab('map');return;}
+      if(!d)return;
+      if(act==='rename'){const v=readStr('devName');if(v)d.name=v;}
+      if(act==='del'){removeDevice(d.id);}
+      if(act==='addroute'){
+        const dst=readStr('rtDst'),pfx=readNum('rtPfx',0),via=readStr('rtVia');
+        const ad=parseIp(dst), av=parseIp(via);
+        if(!ad||!av){alert('Перевір адреси: і мережа, і шлюз мають бути коректними.');return;}
+        if(ad.f!==av.f){alert('Мережа й шлюз мають бути одного сімейства: IPv4 з IPv4, IPv6 з IPv6.');return;}
+        d.routes.push({dst,prefix:pfx,via});
+      }
+      if(act==='adddefault'){
+        const via=readStr('rtVia');
+        const av=parseIp(via);
+        if(!av){alert('Впиши адресу шлюза в поле «через шлюз».');return;}
+        d.routes=d.routes.filter(r=>{const a=parseIp(r.dst);return !(+r.prefix===0&&a&&a.f===av.f);});
+        d.routes.push({dst:defRoute(av.f),prefix:0,via});
+      }
+      if(act==='dhcptoggle'){d.dhcp.on=!d.dhcp.on;
+        if(d.dhcp.on&&!d.dhcp.from){const p=ifAddrs(d.ifaces[0]).find(x=>x.a.f===4);
+          if(p){const base=netA(p.a,p.prefix);d.dhcp.from=fmtIp({f:4,n:base.n+100n});d.dhcp.to=fmtIp({f:4,n:base.n+150n});}}}
+      if(act==='dhcprange'){const a=readStr('dhFrom'),b=readStr('dhTo');
+        const pa=parseIp(a),pb=parseIp(b);
+        if(!pa||!pb||pa.f!==4||pb.f!==4||pb.n<pa.n){alert('Діапазон має бути двома коректними адресами IPv4, і початок не більший за кінець.');return;}
+        d.dhcp.from=a;d.dhcp.to=b;}
+      if(act==='nat'){d.nat.on=!d.nat.on;d.nat.out=readNum('natOut',d.nat.out);}
+      if(act==='white'){
+        d.white=!d.white;
+        const modem=devList().find(x=>x.type==='modem');
+        if(d.white){
+          d.ifaces[0].ip='198.51.100.6';d.ifaces[0].prefix=30;d.nat.on=false;
+          if(modem){modem.ifaces[1].ip='198.51.100.7';modem.ifaces[1].prefix=30;
+            modem.routes=[{dst:'0.0.0.0',prefix:0,via:'198.51.100.6'}];}
+        }else{
+          d.ifaces[0].ip='100.64.0.1';d.ifaces[0].prefix=10;d.nat.on=true;
+          if(modem){modem.ifaces[1].ip='100.64.7.20';modem.ifaces[1].prefix=10;
+            modem.routes=[{dst:'0.0.0.0',prefix:0,via:'100.64.0.1'}];}
+        }
+      }
+      if(act==='addfwd'){
+        const ip=readStr('fwIp');
+        const ai=parseIp(ip);
+        if(!ai||ai.f!==4){alert('Проброс портів через NAT стосується лише IPv4 — впиши адресу IPv4 внутрішнього хоста.');return;}
+        d.nat.fwd.push({port:readNum('fwPort',8080),ip,toPort:readNum('fwTo',8080)});
+      }
+      renderAll();return;
+    }
+
+    const ask=e.target.closest('[data-ask]');
+    if(ask){const a=HELP[ask.dataset.ask];
+      if(a)tutorAnswer('<div class="verdict">'+esc(a.t)+'</div>'+a.b.map(p=>'<p class="hint" style="margin-bottom:7px">'+p+'</p>').join(''));
+      return;}
+    const tu=e.target.closest('[data-tutor]');
+    if(tu){
+      const act=tu.dataset.tutor;
+      if(act==='rescan'){N._tutorAns=null;renderTutor();return;}
+      if(act==='tip'){N._tutorTip=!N._tutorTip;renderTutor();return;}
+      if(act==='savekey'){const v=(document.getElementById('tutorKey')||{}).value||'';
+        try{if(v.trim())localStorage.setItem('patch_key',v.trim());}catch(err){}
+        renderTutor();return;}
+      if(act==='delkey'){try{localStorage.removeItem('patch_key');}catch(err){}renderTutor();return;}
+      if(act==='send'){
+        const qel=document.getElementById('tutorQ');const question=(qel&&qel.value||'').trim();
+        if(!question)return;
+        tutorAnswer('<div class="hint">думаю…</div>');
+        askModel(question).then(a=>{
+          tutorAnswer('<div class="verdict">відповідь моделі</div><p class="hint" style="white-space:pre-wrap">'+esc(a)+'</p>');
+        }).catch(()=>{
+          const words=question.toLowerCase();
+          const hit=Object.keys(HELP).find(k=>{
+            const a=HELP[k];const hay=(a.t+' '+a.k+' '+a.b.join(' ')).toLowerCase();
+            return words.split(/[^a-zа-яіїєґ0-9]+/).filter(w=>w.length>4).some(w=>hay.includes(w));
+          });
+          const a=hit?HELP[hit]:null;
+          tutorAnswer('<div class="verdict bad">Модель недоступна: потрібен ключ API, або немає інтернету.</div>'
+            +(a?('<div class="hint" style="margin-bottom:6px">Найближче за темою зі вбудованої довідки:</div><div class="verdict">'+esc(a.t)+'</div>'
+                +a.b.map(p=>'<p class="hint" style="margin-bottom:7px">'+p+'</p>').join(''))
+              :'<div class="hint">У вбудованій довідці нічого схожого не знайшлось. Спробуйте розбір схеми вище — він працює завжди.</div>'));
+        });
+        return;
+      }
+      return;
+    }
+    const tk=e.target.closest('[data-task]');
+    if(tk){N._res=null;N._tip=null;loadTask(tk.dataset.task);tab('map');return;}
+    const tp=e.target.closest('[data-tasktip]');
+    if(tp){N._tip=N._tip===tp.dataset.tasktip?null:tp.dataset.tasktip;renderTasks();return;}
+    const tc=e.target.closest('[data-taskcheck]');
+    if(tc){
+      const t=taskById(tc.dataset.taskcheck);
+      let ok=false; try{ok=!!t.check();}catch(err){ok=false;}
+      N.solved=N.solved||{}; if(ok)N.solved[t.id]=true;
+      N._res={ok,text:ok?'Працює. Перевірка пройшла на вашій конфігурації.':'Ще ні. Відкрий «Перевірку», запусти ping і подивись, на якому кроці обривається.'};
+      renderTasks();save();return;
+    }
+  });
+
+  document.body.addEventListener('change',e=>{
+    const inp=e.target.closest('[data-if]');
+    if(inp&&N.sel){
+      const d=dev(N.sel),i=+inp.dataset.if,k=inp.dataset.k;
+      if(k==='prefix'){let v=+inp.value;if(isNaN(v))v=24;d.ifaces[i].prefix=Math.max(0,Math.min(32,v));}
+      else if(k==='prefix6'){let v=+inp.value;if(isNaN(v))v=64;d.ifaces[i].prefix6=Math.max(0,Math.min(128,v));}
+      else if(k==='ip6')d.ifaces[i].ip6=inp.value.trim();
+      else d.ifaces[i].ip=inp.value.trim();
+      renderAll();return;
+    }
+    if(e.target.id==='natOut'&&N.sel){dev(N.sel).nat.out=+e.target.value;save();}
+  });
+
+  document.getElementById('pingBtn').addEventListener('click',()=>{
+    const s=document.getElementById('runSrc').value,d=readStr('runDst');
+    if(!s||!d){document.getElementById('runOut').innerHTML='<div class="verdict bad">Обери відправника й впиши адресу.</div>';return;}
+    showPing(s,d);
+  });
+  document.getElementById('trBtn').addEventListener('click',()=>{
+    const s=document.getElementById('runSrc').value,d=readStr('runDst');
+    if(s&&d)showTrace(s,d);
+  });
+  document.getElementById('anBtn').addEventListener('click',()=>{
+    showAnalyze(readStr('runDst'));
+  });
+  document.getElementById('portBtn').addEventListener('click',()=>{
+    const s=document.getElementById('runSrc').value,d=readStr('runDst');
+    if(s&&d)showPort(s,d,readNum('runPort',8080));
+  });
+
+  /* плавне перетягування: рухаємо тільки transform групи й d кабелів, без перемальовування схеми */
+  let drag=null, raf=null;
+  function applyDrag(){
+    raf=null; if(!drag)return;
+    const d=dev(drag.id); if(!d)return;
+    if(drag.g)drag.g.setAttribute('transform','translate('+d.x.toFixed(1)+','+d.y.toFixed(1)+')');
+    drag.wires.forEach(w=>{
+      const a=dev(w.l.a.d), b=dev(w.l.b.d); if(!a||!b)return;
+      const path=wireD(a,b);
+      if(w.el)w.el.setAttribute('d',path);
+      if(w.motion)w.motion.setAttribute('path',path);
+    });
+  }
+  document.addEventListener('pointerdown',e=>{
+    if(N.mode)return;
+    const g=e.target.closest('[data-dev]'); if(!g)return;
+    const svg=document.getElementById('netsvg'); if(!svg)return;
+    const r=svg.getBoundingClientRect();
+    const d=dev(g.dataset.dev); if(!d)return;
+    const px=(e.clientX-r.left)/r.width*520, py=(e.clientY-r.top)/r.height*380;
+    drag={id:d.id,r,moved:false,g,offx:d.x-px,offy:d.y-py,
+      wires:N.links.filter(l=>l.a.d===d.id||l.b.d===d.id).map(l=>({l,
+        el:document.getElementById('w_'+l.id),motion:document.getElementById('am_'+l.id)}))};
+    try{g.setPointerCapture(e.pointerId);}catch(err){}
+    e.preventDefault();
+  },{passive:false});
+  document.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    const d=dev(drag.id); if(!d)return;
+    const x=(e.clientX-drag.r.left)/drag.r.width*520+drag.offx;
+    const y=(e.clientY-drag.r.top)/drag.r.height*380+drag.offy;
+    if(!drag.moved&&(Math.abs(x-d.x)>2||Math.abs(y-d.y)>2))drag.moved=true;
+    d.x=Math.max(48,Math.min(472,x)); d.y=Math.max(28,Math.min(352,y));
+    if(!raf)raf=requestAnimationFrame(applyDrag);
+    e.preventDefault();
+  },{passive:false});
+  document.addEventListener('pointerup',e=>{
+    if(!drag)return;
+    if(drag.moved){suppressClick=true;save();}
+    try{drag.g.releasePointerCapture(e.pointerId);}catch(err){}
+    drag=null;
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHelp();});
+
+  renderAll();
+}
+/* ---- PWA: офлайн і встановлення на телефон ---- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); deferredPrompt=e;
+  const b=document.getElementById('installBtn');
+  if(b)b.style.display='inline-flex';
+});
+document.addEventListener('click',async e=>{
+  if(!e.target.closest('#installBtn'))return;
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  const b=document.getElementById('installBtn'); if(b)b.style.display='none';
+});
+load();
+</script>
+</body>
+</html>
