@@ -1,5 +1,5 @@
 /* PATCH — офлайн-кеш. Змінюйте VERSION при кожному оновленні файлів. */
-const VERSION = 'patch-v2';
+const VERSION = 'patch-v12';
 const ASSETS = [
   './',
   './index.html',
